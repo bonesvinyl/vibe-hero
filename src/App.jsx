@@ -397,6 +397,9 @@ function App() {
           onStateChange: (event) => {
             if (event.data === window.YT.PlayerState.PLAYING) {
               startBeatDetection()
+            } else if (event.data === window.YT.PlayerState.ENDED) {
+              // Video ended - show results screen
+              stopGame()
             }
           }
         }
@@ -480,15 +483,11 @@ function App() {
     if (key === 'enter') {
       if (gameState === 'playing') {
         setGameState('paused')
-        if (gameLoopRef.current) {
-          clearInterval(gameLoopRef.current)
-        }
         if (playerRef.current && playerRef.current.pauseVideo) {
           playerRef.current.pauseVideo()
         }
       } else if (gameState === 'paused') {
         setGameState('playing')
-        startGame()
         if (playerRef.current && playerRef.current.playVideo) {
           playerRef.current.playVideo()
         }
@@ -689,7 +688,7 @@ function App() {
 
   // Keyboard event listeners
   useEffect(() => {
-    if (gameState === 'playing') {
+    if (gameState === 'playing' || gameState === 'paused') {
       window.addEventListener('keydown', handleKeyDown)
       window.addEventListener('keyup', handleKeyUp)
 
@@ -761,7 +760,6 @@ function App() {
           <div className="menu-buttons">
             <button onClick={() => {
               setGameState('playing')
-              startGame()
               if (playerRef.current && playerRef.current.playVideo) {
                 playerRef.current.playVideo()
               }
