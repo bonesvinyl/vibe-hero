@@ -1,0 +1,21 @@
+CROWD SOUND EFFECTS - INSTALLED ✓
+
+The following crowd sound effects are installed and ready:
+
+CHEERING SOUNDS (played on high combos/whammy bar):
+- cheer1.mp3 - Large Arena Concert Crowd Cheering & Applauding
+- cheer2.mp3 - Large Crowd Cheers (Concert)
+Volume: 15% (subtle background effect)
+
+BOOING SOUNDS (played after 10 seconds of missing notes):
+- boo1.mp3 - Booing Crowd Sound Effect
+- boo2.mp3 - Crowd Booing Sound Effect
+Volume: 20% (slightly more noticeable)
+
+The game randomly selects from these sounds to create variety and keep the crowd reactions feeling dynamic and authentic!
+
+WHEN CROWD SOUNDS PLAY:
+- Cheering: When you hit 20x multiplier or every 10 combo hits
+- Booing: After 10 seconds of continuously missing notes
+
+Note: Sounds are intentionally subtle to not overpower the music playing from YouTube.
