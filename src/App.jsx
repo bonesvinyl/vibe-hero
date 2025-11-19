@@ -894,40 +894,181 @@ function App() {
   // Paused screen
   if (gameState === 'paused') {
     return (
-      <div className="game-container">
-        {/* YouTube Video Background (still visible when paused) */}
-        {videoId && (
-          <div className="video-background">
-            <div id="youtube-player"></div>
-          </div>
-        )}
-
+      <div className="game-container" style={{
+        background: 'linear-gradient(135deg, #1a1a1a 0%, #000 100%)'
+      }}>
         <div className="menu" style={{
           background: 'rgba(0, 0, 0, 0.95)',
           position: 'relative',
-          zIndex: 100
+          zIndex: 100,
+          boxShadow: '0 0 60px rgba(255, 255, 0, 0.3)'
         }}>
-          <h1 style={{ color: '#FFFF00', marginBottom: '2rem' }}>PAUSED</h1>
-          <div style={{ fontSize: '1rem', marginBottom: '2rem', opacity: 0.8 }}>
-            <p>Game paused. Take a break!</p>
+          <h1 style={{
+            color: '#FFFF00',
+            marginBottom: '2rem',
+            textShadow: '4px 4px 0 rgba(255, 255, 0, 0.3)'
+          }}>PAUSED</h1>
+          <div style={{
+            fontSize: '1.5rem',
+            marginBottom: '2rem',
+            opacity: 0.8,
+            textAlign: 'center',
+            letterSpacing: '0.1em'
+          }}>
+            <p>⏸️ GAME PAUSED ⏸️</p>
+            <p style={{ fontSize: '1rem', marginTop: '1rem', color: '#00FFFF' }}>
+              Press ENTER to resume or click below
+            </p>
           </div>
           <div className="menu-buttons">
             <button onClick={() => {
+              // Calculate how long we were paused
+              const pauseDuration = Date.now() - pauseTimeRef.current
+
+              // Adjust all existing note spawn times forward by the pause duration
+              setNotes(prev => prev.map(note => ({
+                ...note,
+                spawnTime: note.spawnTime + pauseDuration
+              })))
+
               setGameState('playing')
               if (playerRef.current && playerRef.current.playVideo) {
                 playerRef.current.playVideo()
               }
+
+              // Restart the note spawning loop
+              const beatInterval = (60 / bpm) * 1000
+              const difficultySettings = {
+                easy: { spawnRate: 2, chords: false, offbeats: 0.3 },
+                medium: { spawnRate: 1, chords: mediumChords, offbeats: 0.5 },
+                expert: { spawnRate: 1, chords: true, offbeats: 0.7 }
+              }
+              const settings = difficultySettings[difficulty]
+              let beatCount = 0
+
+              gameLoopRef.current = setInterval(() => {
+                beatCount++
+
+                if (beatCount % settings.spawnRate === 0) {
+                  const spawnTime = Date.now()
+
+                  if (settings.chords && Math.random() > 0.6) {
+                    const chordSize = Math.random() > 0.7 ? 3 : 2
+                    const availableLanes = [0, 1, 2, 3, 4]
+                    const chordLanes = []
+
+                    for (let i = 0; i < chordSize; i++) {
+                      const laneIndex = Math.floor(Math.random() * availableLanes.length)
+                      chordLanes.push(availableLanes[laneIndex])
+                      availableLanes.splice(laneIndex, 1)
+                    }
+
+                    chordLanes.forEach(lane => {
+                      const id = noteIdRef.current++
+                      const isBlue = lane === 1
+
+                      setNotes(prev => [...prev, {
+                        id,
+                        lane,
+                        spawnTime,
+                        hit: false,
+                        isChord: true,
+                        isBlue
+                      }])
+
+                      setTotalNotesSpawned(prev => prev + 1)
+
+                      setTimeout(() => {
+                        setNotes(prev => {
+                          const note = prev.find(n => n.id === id)
+                          if (note && !note.hit) {
+                            setCombo(0)
+                            setMultiplier(1)
+                            setMissedNotes(m => m + 1)
+                          }
+                          return prev.filter(n => n.id !== id)
+                        })
+                      }, FALL_DURATION + 500)
+                    })
+                  } else {
+                    const lane = Math.floor(Math.random() * LANES)
+                    const id = noteIdRef.current++
+                    const isBlue = lane === 1
+
+                    setNotes(prev => [...prev, {
+                      id,
+                      lane,
+                      spawnTime,
+                      hit: false,
+                      isChord: false,
+                      isBlue
+                    }])
+
+                    setTotalNotesSpawned(prev => prev + 1)
+
+                    setTimeout(() => {
+                      setNotes(prev => {
+                        const note = prev.find(n => n.id === id)
+                        if (note && !note.hit) {
+                          setCombo(0)
+                          setMultiplier(1)
+                          setMissedNotes(m => m + 1)
+                          setCrowdMood('booing')
+                        }
+                        return prev.filter(n => n.id !== id)
+                      })
+                    }, FALL_DURATION + 500)
+                  }
+                }
+
+                if (Math.random() > (1 - settings.offbeats)) {
+                  setTimeout(() => {
+                    const lane = Math.floor(Math.random() * LANES)
+                    const id = noteIdRef.current++
+                    const spawnTime = Date.now()
+                    const isBlue = lane === 1
+
+                    setNotes(prev => [...prev, {
+                      id,
+                      lane,
+                      spawnTime,
+                      hit: false,
+                      isChord: false,
+                      isBlue
+                    }])
+
+                    setTotalNotesSpawned(prev => prev + 1)
+
+                    setTimeout(() => {
+                      setNotes(prev => {
+                        const note = prev.find(n => n.id === id)
+                        if (note && !note.hit) {
+                          setCombo(0)
+                          setMultiplier(1)
+                          setMissedNotes(m => m + 1)
+                          setCrowdMood('booing')
+                        }
+                        return prev.filter(n => n.id !== id)
+                      })
+                    }, FALL_DURATION + 500)
+                  }, beatInterval / 2)
+                }
+              }, beatInterval)
             }} style={{
               borderColor: '#00FF00',
-              color: '#00FF00'
+              color: '#00FF00',
+              fontSize: '1.25rem',
+              padding: '1rem 2rem'
             }}>
-              RESUME
+              ▶ RESUME
             </button>
             <button onClick={stopGame} style={{
               borderColor: '#FF0000',
-              color: '#FF0000'
+              color: '#FF0000',
+              fontSize: '1.25rem',
+              padding: '1rem 2rem'
             }}>
-              END SONG
+              ■ END SONG
             </button>
           </div>
         </div>
