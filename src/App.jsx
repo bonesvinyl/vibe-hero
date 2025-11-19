@@ -47,6 +47,7 @@ function App() {
   const animationFrameRef = useRef(null)
   const crowdAudioRef = useRef(null)
   const missCheckIntervalRef = useRef(null)
+  const pauseTimeRef = useRef(0) // Track when pause started
 
   // Extract YouTube video ID from URL
   const extractVideoId = (url) => {
@@ -479,15 +480,158 @@ function App() {
     // Pause/Resume game with Enter key
     if (key === 'enter') {
       if (gameState === 'playing') {
+        // Pause the game
         setGameState('paused')
+
+        // Store when we paused
+        pauseTimeRef.current = Date.now()
+
+        // Pause the video
         if (playerRef.current && playerRef.current.pauseVideo) {
           playerRef.current.pauseVideo()
         }
+
+        // Stop the note spawning loop
+        if (gameLoopRef.current) {
+          clearInterval(gameLoopRef.current)
+          gameLoopRef.current = null
+        }
       } else if (gameState === 'paused') {
+        // Calculate how long we were paused
+        const pauseDuration = Date.now() - pauseTimeRef.current
+
+        // Adjust all existing note spawn times forward by the pause duration
+        setNotes(prev => prev.map(note => ({
+          ...note,
+          spawnTime: note.spawnTime + pauseDuration
+        })))
+
+        // Resume the game
         setGameState('playing')
+
+        // Resume the video
         if (playerRef.current && playerRef.current.playVideo) {
           playerRef.current.playVideo()
         }
+
+        // Restart the note spawning loop
+        const beatInterval = (60 / bpm) * 1000
+        const difficultySettings = {
+          easy: { spawnRate: 2, chords: false, offbeats: 0.3 },
+          medium: { spawnRate: 1, chords: mediumChords, offbeats: 0.5 },
+          expert: { spawnRate: 1, chords: true, offbeats: 0.7 }
+        }
+        const settings = difficultySettings[difficulty]
+        let beatCount = 0
+
+        gameLoopRef.current = setInterval(() => {
+          beatCount++
+
+          if (beatCount % settings.spawnRate === 0) {
+            const spawnTime = Date.now()
+
+            if (settings.chords && Math.random() > 0.6) {
+              const chordSize = Math.random() > 0.7 ? 3 : 2
+              const availableLanes = [0, 1, 2, 3, 4]
+              const chordLanes = []
+
+              for (let i = 0; i < chordSize; i++) {
+                const laneIndex = Math.floor(Math.random() * availableLanes.length)
+                chordLanes.push(availableLanes[laneIndex])
+                availableLanes.splice(laneIndex, 1)
+              }
+
+              chordLanes.forEach(lane => {
+                const id = noteIdRef.current++
+                const isBlue = lane === 1
+
+                setNotes(prev => [...prev, {
+                  id,
+                  lane,
+                  spawnTime,
+                  hit: false,
+                  isChord: true,
+                  isBlue
+                }])
+
+                setTotalNotesSpawned(prev => prev + 1)
+
+                setTimeout(() => {
+                  setNotes(prev => {
+                    const note = prev.find(n => n.id === id)
+                    if (note && !note.hit) {
+                      setCombo(0)
+                      setMultiplier(1)
+                      setMissedNotes(m => m + 1)
+                    }
+                    return prev.filter(n => n.id !== id)
+                  })
+                }, FALL_DURATION + 500)
+              })
+            } else {
+              const lane = Math.floor(Math.random() * LANES)
+              const id = noteIdRef.current++
+              const isBlue = lane === 1
+
+              setNotes(prev => [...prev, {
+                id,
+                lane,
+                spawnTime,
+                hit: false,
+                isChord: false,
+                isBlue
+              }])
+
+              setTotalNotesSpawned(prev => prev + 1)
+
+              setTimeout(() => {
+                setNotes(prev => {
+                  const note = prev.find(n => n.id === id)
+                  if (note && !note.hit) {
+                    setCombo(0)
+                    setMultiplier(1)
+                    setMissedNotes(m => m + 1)
+                    setCrowdMood('booing')
+                  }
+                  return prev.filter(n => n.id !== id)
+                })
+              }, FALL_DURATION + 500)
+            }
+          }
+
+          if (Math.random() > (1 - settings.offbeats)) {
+            setTimeout(() => {
+              const lane = Math.floor(Math.random() * LANES)
+              const id = noteIdRef.current++
+              const spawnTime = Date.now()
+              const isBlue = lane === 1
+
+              setNotes(prev => [...prev, {
+                id,
+                lane,
+                spawnTime,
+                hit: false,
+                isChord: false,
+                isBlue
+              }])
+
+              setTotalNotesSpawned(prev => prev + 1)
+
+              setTimeout(() => {
+                setNotes(prev => {
+                  const note = prev.find(n => n.id === id)
+                  if (note && !note.hit) {
+                    setCombo(0)
+                    setMultiplier(1)
+                    setMissedNotes(m => m + 1)
+                    setCrowdMood('booing')
+                  }
+                  return prev.filter(n => n.id !== id)
+                })
+              }, FALL_DURATION + 500)
+            }, beatInterval / 2)
+          }
+        }, beatInterval)
       }
       return
     }
