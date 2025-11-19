@@ -35,6 +35,7 @@ function App() {
   const [lastHitTime, setLastHitTime] = useState(Date.now())
   const [totalNotesSpawned, setTotalNotesSpawned] = useState(0)
   const [notesHit, setNotesHit] = useState(0)
+  const [maxCombo, setMaxCombo] = useState(0) // Track best combo
   const [accuracyPercent, setAccuracyPercent] = useState(0)
   const [starRating, setStarRating] = useState(0)
 
@@ -452,11 +453,7 @@ function App() {
       playerRef.current.pauseVideo()
     }
 
-    // Calculate rating and save high score
-    calculateRating()
-    saveHighScore()
-
-    // Show results screen
+    // Show results screen (rating calculated in useEffect)
     setGameState('finished')
   }
 
@@ -633,6 +630,11 @@ function App() {
     setCombo(newCombo)
     setLastHitTime(Date.now()) // Update last hit time
 
+    // Track max combo
+    if (newCombo > maxCombo) {
+      setMaxCombo(newCombo)
+    }
+
     // Update multiplier based on combo - now with real-time scaling
     let newMultiplier = Math.min(Math.floor(newCombo / 10) + 1, 20)
 
@@ -685,6 +687,14 @@ function App() {
     setFeedback({ quality, text: quality.toUpperCase() })
     setTimeout(() => setFeedback(null), 500)
   }
+
+  // Calculate rating when game finishes
+  useEffect(() => {
+    if (gameState === 'finished') {
+      calculateRating()
+      saveHighScore()
+    }
+  }, [gameState, calculateRating, saveHighScore])
 
   // Keyboard event listeners
   useEffect(() => {
@@ -868,7 +878,7 @@ function App() {
               </div>
               <div>
                 <div style={{ color: '#FF00FF', fontWeight: '900' }}>BEST COMBO</div>
-                <div style={{ fontSize: '1.5rem' }}>{combo}</div>
+                <div style={{ fontSize: '1.5rem' }}>{maxCombo}</div>
               </div>
             </div>
           </div>
@@ -960,6 +970,95 @@ function App() {
               </p>
             )}
           </div>
+
+          {/* Recently Played */}
+          {(() => {
+            // Flatten userStats and get recent games
+            const allGames = Object.values(userStats)
+              .flat()
+              .sort((a, b) => new Date(b.date) - new Date(a.date))
+              .slice(0, 5)
+
+            if (allGames.length > 0) {
+              return (
+                <div style={{
+                  marginBottom: '1.5rem',
+                  maxHeight: '250px',
+                  overflowY: 'auto',
+                  border: '6px solid #00FFFF',
+                  padding: '1rem',
+                  background: '#000',
+                  boxShadow: '8px 8px 0 #00FFFF'
+                }}>
+                  <label style={{
+                    marginBottom: '1rem',
+                    display: 'block',
+                    fontSize: '1.25rem',
+                    color: '#00FFFF',
+                    textShadow: '2px 2px 0 #000',
+                    letterSpacing: '0.15em',
+                    fontWeight: '900'
+                  }}>
+                    🎮 RECENTLY PLAYED 🎮
+                  </label>
+                  {allGames.map((game, i) => (
+                    <div key={i} style={{
+                      padding: '0.75rem',
+                      borderBottom: i < allGames.length - 1 ? '3px solid #00FFFF' : 'none',
+                      fontSize: '0.875rem',
+                      background: i % 2 === 0 ? '#0a0a0a' : '#000'
+                    }}>
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: '0.5rem'
+                      }}>
+                        <span style={{
+                          flex: 1,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          marginRight: '1rem',
+                          color: '#fff',
+                          fontWeight: '900'
+                        }}>
+                          🎵 {game.videoTitle}
+                        </span>
+                        <span style={{
+                          fontSize: '1.25rem',
+                          color: '#FFFF00',
+                          letterSpacing: '0.1em'
+                        }}>
+                          {Array.from({ length: game.stars }).map((_, i) => '★').join('')}
+                        </span>
+                      </div>
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        fontSize: '0.75rem',
+                        opacity: 0.8
+                      }}>
+                        <span style={{ color: '#00FF00' }}>
+                          {game.score.toLocaleString()} pts
+                        </span>
+                        <span style={{ color: '#00FFFF' }}>
+                          {game.accuracy}% accuracy
+                        </span>
+                        <span style={{ color: '#FF00FF', textTransform: 'uppercase' }}>
+                          {game.difficulty}
+                        </span>
+                        <span style={{ color: '#888' }}>
+                          {new Date(game.date).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
+            }
+            return null
+          })()}
 
           {/* Favorites List */}
           {favorites.length > 0 && (
