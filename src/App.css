@@ -600,28 +600,6 @@
   font-size: 11px;
   height: 43px;
 }
-.streaming-info h3 {
-  margin-bottom: 14px;
-}
-.streaming-info p {
-  font-size: 13px;
-  margin-bottom: 20px;
-}
-.service-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px 0;
-  margin-bottom: 12px;
-  border-top: 1px solid var(--line);
-  font-size: 12px;
-}
-.service-row strong {
-  font-weight: 500;
-}
-.service-row a {
-  font-size: 10px;
-}
 .error-message {
   background: #ed777c0b;
   border: 1px solid #ed777c55;

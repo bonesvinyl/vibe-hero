@@ -12,7 +12,6 @@ import "./App.css";
 const sources = [
   { id: "local", title: "Local audio", icon: "↥" },
   { id: "youtube", title: "YouTube", icon: "▷" },
-  { id: "streaming", title: "Streaming", icon: "♫" },
 ];
 const safeArray = (value) => (Array.isArray(value) ? value : []);
 
@@ -556,247 +555,204 @@ export default function App() {
                 </div>
               </div>
             )}
-            {source === "streaming" && (
-              <div className="source-content streaming-info">
-                <h3>Your library has a few limits.</h3>
-                <p>
-                  Spotify’s developer policy prohibits games. Apple Music’s
-                  terms restrict synchronizing MusicKit content with other
-                  content. Account connections for gameplay are unavailable
-                  under those standard terms.
-                </p>
-                <div className="service-row">
-                  <strong>Spotify</strong>
-                  <a
-                    href="https://developer.spotify.com/policy"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Developer policy ↗
-                  </a>
-                </div>
-                <div className="service-row">
-                  <strong>Apple Music</strong>
-                  <a
-                    href="https://developer.apple.com/support/terms/apple-developer-program-license-agreement/#:~:text=MusicKit%20Content%20cannot"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    MusicKit terms ↗
-                  </a>
-                </div>
-                <p>
-                  Use an unprotected audio file you own, including eligible
-                  purchased downloads. Subscription downloads are protected and
-                  cannot be imported.
-                </p>
-                <button onClick={() => changeSource("local")}>
-                  Choose local audio →
+            <div className="section-heading subsection">
+              <h2>
+                <span className="section-number">02</span> Find your level
+              </h2>
+            </div>
+            <div className="difficulty-options">
+              {[
+                {
+                  id: "easy",
+                  title: "Easy",
+                  sub: "Find the groove",
+                  bars: 1,
+                },
+                {
+                  id: "medium",
+                  title: "Medium",
+                  sub: "Turn it up",
+                  bars: 2,
+                },
+                {
+                  id: "expert",
+                  title: "Expert",
+                  sub: "Let it rip",
+                  bars: 3,
+                },
+              ].map((item) => (
+                <button
+                  disabled={busy || !!imported}
+                  key={item.id}
+                  aria-pressed={difficulty === item.id}
+                  onClick={() => changeDifficulty(item.id)}
+                >
+                  <span className="level-bars">
+                    {[0, 1, 2].map((i) => (
+                      <i
+                        key={i}
+                        className={i < item.bars ? "filled" : ""}
+                      />
+                    ))}
+                  </span>
+                  <strong>{item.title}</strong>
+                  <small>{item.sub}</small>
+                </button>
+              ))}
+            </div>
+            <div className="play-mode">
+              <span>Play style</span>
+              <div>
+                <button
+                  aria-pressed={mode === "tap"}
+                  onClick={() => setMode("tap")}
+                >
+                  Keyboard / tap
+                </button>
+                <button
+                  aria-pressed={mode === "strum"}
+                  onClick={() => setMode("strum")}
+                >
+                  Guitar / strum
                 </button>
               </div>
-            )}
-            {source !== "streaming" && (
-              <>
-                <div className="section-heading subsection">
-                  <h2>
-                    <span className="section-number">02</span> Find your level
-                  </h2>
-                </div>
-                <div className="difficulty-options">
-                  {[
-                    {
-                      id: "easy",
-                      title: "Easy",
-                      sub: "Find the groove",
-                      bars: 1,
-                    },
-                    {
-                      id: "medium",
-                      title: "Medium",
-                      sub: "Turn it up",
-                      bars: 2,
-                    },
-                    {
-                      id: "expert",
-                      title: "Expert",
-                      sub: "Let it rip",
-                      bars: 3,
-                    },
-                  ].map((item) => (
-                    <button
-                      disabled={busy || !!imported}
-                      key={item.id}
-                      aria-pressed={difficulty === item.id}
-                      onClick={() => changeDifficulty(item.id)}
-                    >
-                      <span className="level-bars">
-                        {[0, 1, 2].map((i) => (
-                          <i
-                            key={i}
-                            className={i < item.bars ? "filled" : ""}
-                          />
-                        ))}
-                      </span>
-                      <strong>{item.title}</strong>
-                      <small>{item.sub}</small>
-                    </button>
-                  ))}
-                </div>
-                <div className="play-mode">
-                  <span>Play style</span>
-                  <div>
-                    <button
-                      aria-pressed={mode === "tap"}
-                      onClick={() => setMode("tap")}
-                    >
-                      Keyboard / tap
-                    </button>
-                    <button
-                      aria-pressed={mode === "strum"}
-                      onClick={() => setMode("strum")}
-                    >
-                      Guitar / strum
-                    </button>
-                  </div>
-                </div>
-                <details className="fine-tune">
-                  <summary>
-                    Fine-tune your set <span>+</span>
-                  </summary>
-                  <label className="range-label">
-                    Timing offset{" "}
-                    <strong>
-                      {offset > 0 ? "+" : ""}
-                      {offset} ms
-                    </strong>
+            </div>
+            <details className="fine-tune">
+              <summary>
+                Fine-tune your set <span>+</span>
+              </summary>
+              <label className="range-label">
+                Timing offset{" "}
+                <strong>
+                  {offset > 0 ? "+" : ""}
+                  {offset} ms
+                </strong>
+                <input
+                  type="range"
+                  min="-500"
+                  max="500"
+                  step="5"
+                  value={offset}
+                  onChange={(e) => {
+                    const value = Number(e.target.value);
+                    setOffset(value);
+                    writeStored("vh.offset.v2", value);
+                  }}
+                />
+              </label>
+              <p className="small">
+                Positive values move notes later. If your hits feel late,
+                increase the offset. Use wired audio for the most consistent
+                timing.
+              </p>
+              <div className="chart-actions">
+                <label className="file-button">
+                  Import chart
+                  <input
+                    type="file"
+                    accept=".json,application/json"
+                    disabled={busy}
+                    onChange={(event) => {
+                      importChart(event.target.files[0]);
+                      event.target.value = "";
+                    }}
+                  />
+                </label>
+                <button
+                  disabled={!(analysis?.notes.length || imported)}
+                  onClick={exportChart}
+                >
+                  Export chart
+                </button>
+                {imported && (
+                  <button onClick={() => setImported(null)}>
+                    Use generated chart
+                  </button>
+                )}
+              </div>
+              {imported && (
+                <p className="small">
+                  Custom chart loaded · {imported.notes.length} notes.
+                  Difficulty does not modify imported charts.
+                </p>
+              )}
+              {source === "local" && track && (
+                <div className="backdrop-setup">
+                  <label>
+                    Music video URL (optional)
                     <input
-                      type="range"
-                      min="-500"
-                      max="500"
-                      step="5"
-                      value={offset}
-                      onChange={(e) => {
-                        const value = Number(e.target.value);
-                        setOffset(value);
-                        writeStored("vh.offset.v2", value);
-                      }}
+                      type="url"
+                      placeholder="Paste a matching YouTube video"
+                      value={backdrop}
+                      onChange={(e) => setBackdrop(e.target.value)}
                     />
                   </label>
-                  <p className="small">
-                    Positive values move notes later. If your hits feel late,
-                    increase the offset. Use wired audio for the most consistent
-                    timing.
-                  </p>
-                  <div className="chart-actions">
-                    <label className="file-button">
-                      Import chart
-                      <input
-                        type="file"
-                        accept=".json,application/json"
-                        disabled={busy}
-                        onChange={(event) => {
-                          importChart(event.target.files[0]);
-                          event.target.value = "";
-                        }}
-                      />
-                    </label>
-                    <button
-                      disabled={!(analysis?.notes.length || imported)}
-                      onClick={exportChart}
+                  <div className="file-note">
+                    <a
+                      href={`https://www.youtube.com/results?search_query=${encodeURIComponent(`${title} official music video`)}`}
+                      target="_blank"
+                      rel="noreferrer"
                     >
-                      Export chart
-                    </button>
-                    {imported && (
-                      <button onClick={() => setImported(null)}>
-                        Use generated chart
+                      Search YouTube ↗
+                    </a>
+                    {import.meta.env.VITE_YOUTUBE_API_KEY && (
+                      <button disabled={searching} onClick={findVideo}>
+                        {searching ? "Searching…" : "Find video matches"}
                       </button>
                     )}
                   </div>
-                  {imported && (
-                    <p className="small">
-                      Custom chart loaded · {imported.notes.length} notes.
-                      Difficulty does not modify imported charts.
-                    </p>
-                  )}
-                  {source === "local" && track && (
-                    <div className="backdrop-setup">
-                      <label>
-                        Music video URL (optional)
-                        <input
-                          type="url"
-                          placeholder="Paste a matching YouTube video"
-                          value={backdrop}
-                          onChange={(e) => setBackdrop(e.target.value)}
-                        />
-                      </label>
-                      <div className="file-note">
-                        <a
-                          href={`https://www.youtube.com/results?search_query=${encodeURIComponent(`${title} official music video`)}`}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          Search YouTube ↗
-                        </a>
-                        {import.meta.env.VITE_YOUTUBE_API_KEY && (
-                          <button disabled={searching} onClick={findVideo}>
-                            {searching ? "Searching…" : "Find video matches"}
-                          </button>
-                        )}
-                      </div>
-                      {videoMatches.map((item) => (
-                        <button
-                          className="video-match"
-                          key={item.id.videoId}
-                          onClick={() =>
-                            setBackdrop(
-                              `https://www.youtube.com/watch?v=${item.id.videoId}`,
-                            )
-                          }
-                        >
-                          {item.snippet.title} ↗
-                        </button>
-                      ))}
-                      <label>
-                        Video start offset (sec)
-                        <input
-                          type="number"
-                          min="-300"
-                          max="300"
-                          step="0.1"
-                          value={videoOffset}
-                          onChange={(e) =>
-                            setVideoOffset(Number(e.target.value))
-                          }
-                        />
-                      </label>
-                      <p className="small">
-                        The video is muted; your local track drives the game.
-                        Positive offset skips a video intro. Different edits may
-                        need manual adjustment.
-                      </p>
-                    </div>
-                  )}
-                </details>
-                {error && (
-                  <div className="error-message" role="alert">
-                    {error}
-                  </div>
-                )}
-                <button
-                  className="primary start-button"
-                  disabled={
-                    busy ||
-                    (source === "local" &&
-                      (!track || !(analysis?.notes.length || imported))) ||
-                    (source === "youtube" && !youtubeId(url))
-                  }
-                  onClick={start}
-                >
-                  {busy ? "Preparing your track…" : "Take the stage"}
-                  <span>↗</span>
-                </button>
-              </>
+                  {videoMatches.map((item) => (
+                    <button
+                      className="video-match"
+                      key={item.id.videoId}
+                      onClick={() =>
+                        setBackdrop(
+                          `https://www.youtube.com/watch?v=${item.id.videoId}`,
+                        )
+                      }
+                    >
+                      {item.snippet.title} ↗
+                    </button>
+                  ))}
+                  <label>
+                    Video start offset (sec)
+                    <input
+                      type="number"
+                      min="-300"
+                      max="300"
+                      step="0.1"
+                      value={videoOffset}
+                      onChange={(e) =>
+                        setVideoOffset(Number(e.target.value))
+                      }
+                    />
+                  </label>
+                  <p className="small">
+                    The video is muted; your local track drives the game.
+                    Positive offset skips a video intro. Different edits may
+                    need manual adjustment.
+                  </p>
+                </div>
+              )}
+            </details>
+            {error && (
+              <div className="error-message" role="alert">
+                {error}
+              </div>
             )}
+            <button
+              className="primary start-button"
+              disabled={
+                busy ||
+                (source === "local" &&
+                  (!track || !(analysis?.notes.length || imported))) ||
+                (source === "youtube" && !youtubeId(url))
+              }
+              onClick={start}
+            >
+              {busy ? "Preparing your track…" : "Take the stage"}
+              <span>↗</span>
+            </button>
           </section>
           <aside className="preview-panel">
             <div className="preview-heading">
