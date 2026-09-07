@@ -1,187 +1,110 @@
-# VIBE HERO 🎸
+# Vibe Hero — Encore
 
-A Guitar Hero-style rhythm game built with React. Play along to any YouTube music video with keyboard controls!
+A five-fret rhythm game for your own music, built with React 19 and Vite. The Encore rebuild replaces random timer-driven notes with deterministic charts and playback-clock timing.
 
-## Features
+## Run locally
 
-- Play rhythm game with YouTube music videos as background
-- 5-lane note highway (like Guitar Hero)
-- Keyboard controls: A, S, D, F, G keys
-- Scoring system with combos and multipliers
-- Perfect/Good hit detection
-- Real-time visual feedback
-- Brutalist cyberpunk aesthetic with neon colors
-
-## Getting Started
-
-### Install Dependencies
-
-```bash
-npm install
-```
-
-### Crowd Sound Effects ✓
-
-The game includes immersive crowd audio feedback with multiple sound variations:
-
-**Installed Audio Files:**
-- `cheer1.mp3` & `cheer2.mp3` - Large arena crowd cheering
-- `boo1.mp3` & `boo2.mp3` - Crowd booing sounds
-
-**How it works:**
-- The game randomly selects from multiple sound files for variety
-- Cheering plays at 15% volume (subtle background effect)
-- Booing plays at 20% volume (slightly more noticeable)
-- Volumes are intentionally low to not overpower the YouTube music
-
-**When sounds play:**
-- **Cheering:** When you hit 20x multiplier or every 10 combo hits
-- **Booing:** After 10 seconds of continuously missing notes
-
-### Run Development Server
-
-```bash
+```sh
+npm ci
 npm run dev
 ```
 
-The game will be available at `http://localhost:5173/`
+Open the local URL printed by Vite. Choose **Try a demo**, **Take the stage**, then **Play set** for the included original 32-second groove. No account, API key, or audio upload is required.
 
-## How to Play
-
-1. **Enter YouTube URL**: Paste any YouTube music video URL in the menu
-2. **Press START GAME**: The video will load in the background
-3. **Play**: Watch colored notes fall down the highway
-4. **Hit Notes**: Press the corresponding key (A, S, D, F, G) when notes reach the white hit zone at the bottom
-5. **Build Combos**: Hit consecutive notes to build your combo multiplier (up to 8x)
-
-### Controls
-
-- **A** - Red lane (leftmost)
-- **S** - Blue lane
-- **D** - Green lane (center)
-- **F** - Yellow lane
-- **G** - Purple lane (rightmost)
-- **STOP** button - Return to menu
-
-### Scoring
-
-- **Perfect Hit** (within 150ms): 100 points × multiplier
-- **Good Hit** (within 300ms): 50 points × multiplier
-- **Combo Multiplier**: Increases by 1x every 10 consecutive hits (max 8x)
-- **Miss**: Resets combo to 0
-
-## Design
-
-The game features a brutalist cyberpunk aesthetic:
-- Monospace Courier New font
-- High contrast neon colors on black
-- Heavy borders and glowing effects
-- No rounded corners or gradients
-- Aggressive, raw visual style
-- YouTube video plays dimmed and blurred in background
-
-### Color Coding
-
-Each lane has a distinct neon color:
-- Lane 1 (A): Red
-- Lane 2 (S): Cyan
-- Lane 3 (D): Green
-- Lane 4 (F): Yellow
-- Lane 5 (G): Magenta
-
-## Technical Details
-
-### Technologies
-
-- React 18
-- Vite
-- YouTube IFrame Player API
-- Web Audio API (for future beat detection)
-- CSS3 animations
-
-### Note Spawning
-
-Currently uses interval-based random spawning. In future iterations, this can be enhanced with:
-- Web Audio API beat detection
-- Pre-charted note patterns
-- Difficulty levels
-- Song-specific patterns
-
-### Performance
-
-- Optimized with React hooks and memoization
-- Hardware-accelerated CSS animations
-- Efficient state management for real-time gameplay
-
-## Future Enhancements
-
-### Spotify Integration (Coming Soon)
-
-To add Spotify playlist support:
-
-1. Register app at [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
-2. Get Client ID and Client Secret
-3. Implement Spotify Web API authentication
-4. Use Spotify Web Playback SDK for audio
-5. Implement audio analysis for beat detection
-
-**Note**: Spotify integration requires:
-- OAuth 2.0 authentication flow
-- Spotify Premium account for playback
-- Audio analysis API for beat detection
-- More complex setup than YouTube
-
-### Other Planned Features
-
-- Beat detection from audio analysis
-- Multiple difficulty levels
-- Song library/playlist management
-- Leaderboards and high scores
-- Custom note patterns/charts
-- Multiplayer mode
-- More visual effects and animations
-
-## YouTube URL Examples
-
-Try these popular music videos:
-
-```
-https://www.youtube.com/watch?v=dQw4w9WgXcQ
-https://www.youtube.com/watch?v=9bZkp7q19f0
-https://www.youtube.com/watch?v=kJQP7kiw5Fk
+```sh
+npm test
+npm run lint
+npm run build
 ```
 
-## Troubleshooting
+## Music sources
 
-**YouTube video not loading?**
-- Check that the URL is valid
-- Some videos may be restricted from embedding
-- Try a different video
+| Source                             | Available behavior                                                                       | Limits                                                                                                           |
+| ---------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Local MP3 / WAV / M4A / FLAC / OGG | Decode locally, analyze attacks, generate a chart, play using the audio clock            | Format support depends on the browser. Unprotected files only; 100 MB / 20 minutes maximum                       |
+| YouTube                            | Embedded video with a BPM practice grid, tap tempo, first-beat offset, or imported chart | Embeds do not expose decoded audio. No claim of automatic song transcription; embedding restrictions still apply |
+| Local audio + YouTube video        | Muted video panel follows the local song; adjustable video start offset                  | Select the same recording/edit. Ads, buffering, and alternate cuts can disrupt the visual match                  |
+| Spotify / Apple Music              | Source panel explains the current service constraints                                    | No OAuth or subscription playback integration; standard developer terms restrict this game use                   |
 
-**Notes not spawning?**
-- Make sure the video has started playing
-- Check browser console for errors
+Local analysis uses positive spectral flux, adaptive peak selection, and difficulty-dependent minimum note spacing in a Web Worker. Notes retain detected attack times; they are not forced onto an estimated BPM grid. Lanes reflect spectral brightness, **not guitar pitch transcription**. Dense mixes can over- or under-detect notes. Tempo is an approximate display estimate with half/double-tempo ambiguity.
 
-**Keys not responding?**
-- Make sure game is in focus
-- Check that you're pressing A, S, D, F, or G
-- Keys are case-insensitive
+For a truly authored guitar part, import a chart for the exact recording. Future stem separation and pitch/riff analysis would be a separate, measured upgrade.
 
-## Development
+## Controls
 
-The game is structured into several key components:
+Default controls use the familiar Guitar Hero color order: green, red, yellow, blue, orange.
 
-- **App.jsx**: Main game logic and state management
-- **index.css**: Brutalist styling and animations
-- **YouTube Player API**: Video background integration
-- **Game Loop**: Note spawning and timing
-- **Input Handler**: Keyboard event processing
-- **Scoring System**: Points, combos, and multipliers
+- **A S D F G**: frets, left to right.
+- **Enter**: pause / resume.
+- **Space**: activate eight seconds of double points after filling star power.
+- **Arrow Up / Down**: strum in Guitar / strum mode.
+- **Keyboard / tap**: each fret press judges its lane. Chords require every fret.
+- **Guitar / strum**: hold the exact frets, then strum. Extra frets and empty strums break the streak.
 
-## License
+Open **Controllers** to map keyboard keys, gamepad buttons, or signed axes. Release an input before mapping it. Bindings persist on this browser. The live tester shows held controls; device selection uses the reported controller identity. Two identical model devices cannot currently be distinguished. Disconnecting a gamepad, hiding the tab, or losing focus pauses an active game.
 
-MIT
+## Wii Remote inside a guitar
 
-## Credits
+This setup requires a native helper that exposes the guitar as a gamepad. The browser alone does not pair a Wii Remote.
 
-Inspired by Guitar Hero, Rock Band, and other rhythm games.
+[WiiController](https://github.com/WiiController/WiiController) advertises Guitar Hero 3 extension support and a virtual HID gamepad. Its [latest release, v0.14.0](https://github.com/WiiController/WiiController/releases/tag/v0.14.0), is from July 2021 and reports testing through macOS 11.4. That is **not evidence of compatibility with current macOS**, including this development Mac's Apple Silicon / macOS 26.6.1 setup.
+
+If a compatible helper is available: connect the guitar extension to the remote, pair through the helper, then open Controllers in Vibe Hero and press a fret. Verify that a device appears, map five frets and both strum directions, and test held-fret-plus-strum input on the demo. Physical pairing and input have not been verified in this change. No helper or driver was installed and no system Bluetooth settings were changed.
+
+A Wii-to-USB adapter is an alternative if wireless pairing is unavailable. Check its [Mac support and mode instructions](https://wiki.retrocultmods.com/main/v3-quickstart/) before choosing hardware; XInput and HID/keyboard modes are different.
+
+## Timing
+
+All notes store song-relative timestamps. Local playback uses the Web Audio clock and a 2.4-second preroll. YouTube uses its reported playback time with bounded interpolation between samples, freezing during pause/buffering and re-anchoring on new samples. Rendering and input judgments use the same clock and hit-line geometry.
+
+- Perfect: within 55 ms; Good: within 140 ms.
+- Combo multiplier: up to 4×; star power adds 2×.
+- Positive timing calibration moves notes **later**, up to ±500 ms.
+- Video offset is independent: a positive value skips an intro in the video.
+- A backward seek over 250 ms or a forward discontinuity over one second resets the attempt, marking past notes skipped. Rewinding cannot accumulate points from the same attempt.
+- Only completed sets enter the new local history. Existing legacy favorites are read, and legacy username/high-score/stat keys are left intact. Scores from the old random engine are not compared with the new system.
+
+## Custom charts
+
+In **Fine-tune your set**, import or export JSON:
+
+```json
+{
+  "version": 1,
+  "title": "Artist — exact recording",
+  "notes": [
+    { "time": 2.5, "lanes": [0] },
+    { "time": 3.0, "lanes": [1, 3] }
+  ]
+}
+```
+
+Times are seconds from audio/video start. Lanes are 0–4. Notes must be strictly ordered, at least 40 ms apart, and inside the track duration. Chords are one timestamp with multiple unique lanes. Limits: 20,000 notes / 2 MB. Difficulty does not rewrite an imported chart. Sustain/whammy/pitch-bend chart events are not implemented.
+
+## Music video search
+
+A **Search YouTube** link builds a query from the editable song title; paste your chosen video's URL into Fine-tune. It works without credentials.
+
+To enable **Find video matches** inside the app, copy `.env.example` to `.env.local`, supply a YouTube Data API v3 key, and restart Vite. The app requests up to five embeddable candidates; the user chooses the matching edit. Configure HTTP-referrer and API restrictions: `VITE_` values are public browser configuration. Search uses API quota and sends the song title to Google, not the local audio. Matching has not been live-tested with an API key.
+
+## Spotify and Apple Music
+
+As checked September 7, 2026:
+
+- [Spotify Developer Policy](https://developer.spotify.com/policy) prohibits creating games and synchronizing sound recordings with visual media.
+- [Apple Developer Program License Agreement, section 3.3.6(D)](https://developer.apple.com/support/terms/apple-developer-program-license-agreement/) restricts synchronizing MusicKit content with other content unless otherwise permitted by Apple in its documentation.
+
+A subscription is not a source of downloadable PCM for the analysis worker. Do not add a token field that promises functionality these services do not support under the standard terms. A future provider integration needs an expressly permitted design or appropriate permissions.
+
+## Mac app option
+
+The app remains a browser app, with a standalone web manifest and icon. On supported macOS, [Safari's Add to Dock](https://support.apple.com/en-us/104996) provides a separate app window. A local server must remain running for a local URL; this change does not bundle a signed native executable or provide offline app-shell caching. No deployment was made.
+
+## Implementation and validation
+
+- `src/game/`: pure judgment/chart logic, audio analysis worker, transports, canvas rendering, controller bindings.
+- `src/components/`: gameplay session, controller setup, highway preview.
+- `src/App.jsx`: song preparation, source selection, chart import/export, local history.
+- `tests/`: deterministic audio fixtures, media clock, lifecycle and input behavior.
+
+See [validation notes](docs/VALIDATION.md) for passed checks and the remaining live browser and hardware checks.

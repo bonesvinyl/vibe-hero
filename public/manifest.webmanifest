@@ -1,0 +1,17 @@
+{
+  "name": "Vibe Hero",
+  "short_name": "Vibe Hero",
+  "description": "Your music. Your main stage.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#111417",
+  "theme_color": "#111417",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
