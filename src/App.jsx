@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Controllers from "./components/Controllers";
 import HighwayPreview from "./components/HighwayPreview";
 import Session from "./components/Session";
+import TempoDetection from "./components/TempoDetection";
 import { analyzeBuffer, decodeFile, demoBuffer } from "./game/audio";
 import { COLORS, validateChart, youtubeId } from "./game/chart";
 import { loadBindings, readStored, writeStored } from "./game/controller";
@@ -105,6 +106,7 @@ export default function App() {
         id: demo ? "demo-v1" : `${file.name}:${file.size}:${file.lastModified}`,
       });
       setAnalysis(result);
+      if (result.bpm) setBpm(result.bpm);
       if (!result.notes.length)
         setError(
           "No clear attacks detected. Try another recording or import a custom chart.",
@@ -499,6 +501,11 @@ export default function App() {
                   Play along with a music video. Use a BPM grid for practice, or
                   import a chart made for the exact recording.
                 </p>
+                <TempoDetection
+                  key={youtubeId(url) || url}
+                  videoId={youtubeId(url)}
+                  onDetected={setBpm}
+                />
                 <div className="tempo-fields">
                   <label>
                     BPM
@@ -522,6 +529,20 @@ export default function App() {
                     />
                   </label>
                   <button onClick={tapTempo}>Tap tempo</button>
+                </div>
+                <div className="chart-actions tempo-multiples">
+                  <button
+                    disabled={bpm / 2 < 40}
+                    onClick={() => setBpm(bpm / 2)}
+                  >
+                    ½ tempo
+                  </button>
+                  <button
+                    disabled={bpm * 2 > 240}
+                    onClick={() => setBpm(bpm * 2)}
+                  >
+                    2× tempo
+                  </button>
                 </div>
                 <div className="file-note">
                   <span className="small">
@@ -878,7 +899,7 @@ export default function App() {
       </main>
       <footer className="studio-footer">
         <span>MADE FOR THE LOVE OF THE SONG.</span>
-        <span>Browser-native · Mac-friendly · No downloads uploaded</span>
+        <span>Browser-native · Mac-friendly · No audio uploaded</span>
         <a
           href="https://github.com/bonesvinyl/vibe-hero"
           target="_blank"

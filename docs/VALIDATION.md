@@ -25,3 +25,9 @@ Consequently the visual layout, actual decoding/playback, file picker/drop, YouT
 ## Delivery boundary
 
 This is a reviewable browser implementation. Subscription-streaming connections, a native Wii Bluetooth driver, authored guitar transcription, signed desktop packaging, and a deployed release are not included. Their constraints and the available alternatives are documented in README.md and surfaced in the app.
+
+## BPM and immersive-stage follow-up
+
+Added synthetic pulse tests at 75, 90, 120, 155 and 180 BPM with offbeat fills; silence/short-input tests; distinct YouTube error 150/153 mappings; and mocked capture lifecycle tests covering audio-only recording, no-audio selection, cancellation during the picker, active cancellation, and releasing every sharing track.
+
+The user reports error 150 for the Judas Priest video WtuoFv4dcwM. This matches YouTube's documented owner-embedding restriction; the browser tool still cannot inspect live playback because the enforced-policy check is unavailable. The restored full-stage backdrop, native video-control view, brightness/opacity sliders, tab sharing, actual captured-container decoding, and detection on commercial recordings require live browser acceptance. Code/tests passing do not establish those results.

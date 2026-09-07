@@ -19,14 +19,14 @@ npm run build
 
 ## Music sources
 
-| Source                             | Available behavior                                                                       | Limits                                                                                                           |
-| ---------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Local MP3 / WAV / M4A / FLAC / OGG | Decode locally, analyze attacks, generate a chart, play using the audio clock            | Format support depends on the browser. Unprotected files only; 100 MB / 20 minutes maximum                       |
-| YouTube                            | Embedded video with a BPM practice grid, tap tempo, first-beat offset, or imported chart | Embeds do not expose decoded audio. No claim of automatic song transcription; embedding restrictions still apply |
-| Local audio + YouTube video        | Muted video panel follows the local song; adjustable video start offset                  | Select the same recording/edit. Ads, buffering, and alternate cuts can disrupt the visual match                  |
-| Spotify / Apple Music              | Source panel explains the current service constraints                                    | No OAuth or subscription playback integration; standard developer terms restrict this game use                   |
+| Source                             | Available behavior                                                                              | Limits                                                                                                           |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Local MP3 / WAV / M4A / FLAC / OGG | Decode locally, analyze attacks, generate a chart, play using the audio clock                   | Format support depends on the browser. Unprotected files only; 100 MB / 20 minutes maximum                       |
+| YouTube                            | Embedded video with a BPM practice grid, tap tempo, first-beat offset, or imported chart        | Embeds do not expose decoded audio. No claim of automatic song transcription; embedding restrictions still apply |
+| Local audio + YouTube video        | Full-stage muted video behind the highway follows the local song; adjustable video start offset | Select the same recording/edit. Ads, buffering, and alternate cuts can disrupt the visual match                  |
+| Spotify / Apple Music              | Source panel explains the current service constraints                                           | No OAuth or subscription playback integration; standard developer terms restrict this game use                   |
 
-Local analysis uses positive spectral flux, adaptive peak selection, and difficulty-dependent minimum note spacing in a Web Worker. Notes retain detected attack times; they are not forced onto an estimated BPM grid. Lanes reflect spectral brightness, **not guitar pitch transcription**. Dense mixes can over- or under-detect notes. Tempo is an approximate display estimate with half/double-tempo ambiguity.
+Local analysis uses positive spectral flux, autocorrelation tempo estimation, adaptive peak selection, and difficulty-dependent minimum note spacing in a Web Worker. Notes retain detected attack times; they are not forced onto an estimated BPM grid. Lanes reflect spectral brightness, **not guitar pitch transcription**. Dense mixes can over- or under-detect notes. Tempo is an approximate display estimate with half/double-tempo ambiguity.
 
 For a truly authored guitar part, import a chart for the exact recording. Future stem separation and pitch/riff analysis would be a separate, measured upgrade.
 
@@ -108,3 +108,15 @@ The app remains a browser app, with a standalone web manifest and icon. On suppo
 - `tests/`: deterministic audio fixtures, media clock, lifecycle and input behavior.
 
 See [validation notes](docs/VALIDATION.md) for passed checks and the remaining live browser and hardware checks.
+
+## Automatic BPM and the immersive stage
+
+The YouTube setup now includes **Auto-detect BPM**. Choose a local copy of the song or **Listen to a song tab**. For tab detection, play a steady section of the song in another browser tab, choose that tab in the sharing picker, and enable **Share tab audio**. The app records 20 seconds of audio only into memory, estimates tempo locally, and applies it to the BPM field. All sharing tracks stop on completion, cancellation, errors, or leaving the detector. Video frames are never recorded or uploaded. Browser tab-audio support varies; Chrome/Edge are the intended path, with a file picker fallback. No microphone is requested.
+
+The estimator tests repeating periods across the onset envelope and handles longer-period aliases from fills. It reports pulse strength and does not promise perfect tempo on arbitrary music. Half/double-tempo controls remain available. Detection sets tempo only: the first-beat offset still needs to match the exact recording. Tab samples are used for tempo, not a full-song chart. File import on the Local audio tab continues to analyze the full song and generate timestamped notes.
+
+[BPM Database](https://www.bpmdatabase.com/music/search/) is linked for manual lookup. Its [terms](https://www.bpmdatabase.com/terms/) prohibit automated collection without express written consent, so the app does not scrape it.
+
+Videos now render behind the fretboard across the stage. Brightness and highway-opacity sliders let the player balance immersion and readability. **Video controls** pauses the game and exposes the native player; **Back to fretboard** pauses the video, and seeking during that preview resets the attempt when returning. Local audio without a video retains the studio backdrop.
+
+YouTube errors are now differentiated. Error **150** (reported for `WtuoFv4dcwM`) means the owner disallows embedded playback, like error 101. A video can play on youtube.com while refusing playback in this game. Error **153** instead indicates missing player identification/referrer information. The app links to the original video and suggests another upload or local audio rather than treating every error as a generic restriction. See the [official error definitions](https://developers.google.com/youtube/iframe_api_reference#onError).

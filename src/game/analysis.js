@@ -1,3 +1,4 @@
+import { estimateTempo } from "./tempo.js";
 // Positive spectral flux over a Hann-windowed FFT. Runs in a worker in the app.
 function spectrum(samples, start, size) {
   const real = new Float64Array(size),
@@ -94,29 +95,11 @@ export function analyze(samples, sampleRate, difficulty = "medium") {
     time: +Math.max(0, p.time - size / (sampleRate * 4)).toFixed(4),
     lanes: [boundaries.filter((b) => p.tone > b).length],
   }));
-  const histogram = new Map();
-  for (let i = 1; i < peaks.length; i++) {
-    const delta = peaks[i].time - peaks[i - 1].time;
-    if (delta < 0.2 || delta > 2) continue;
-    let tempo = 60 / delta;
-    while (tempo < 70) tempo *= 2;
-    while (tempo > 180) tempo /= 2;
-    const bucket = Math.round(tempo);
-    histogram.set(bucket, (histogram.get(bucket) || 0) + 1);
-  }
-  const ranked = [...histogram]
-    .map(([bpm]) => [
-      bpm,
-      (histogram.get(bpm - 1) || 0) +
-        histogram.get(bpm) +
-        (histogram.get(bpm + 1) || 0),
-    ])
-    .sort((a, b) => b[1] - a[1]);
   return {
     notes,
-    bpm: ranked[0]?.[0] || null,
-    confidence: ranked.length
-      ? Math.min(1, ranked[0][1] / Math.max(1, peaks.length - 1))
-      : 0,
+    ...estimateTempo(
+      frames.map((frame) => frame.flux),
+      sampleRate / hop,
+    ),
   };
 }

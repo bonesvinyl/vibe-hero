@@ -12,7 +12,11 @@ const formatTime = (time) =>
 export default function Session({ config, bindings, onExit, onResult }) {
   const canvas = useRef(null),
     videoHost = useRef(null),
-    runtime = useRef(null);
+    runtime = useRef(null),
+    highwayOpacity = useRef(0.72);
+  const [brightness, setBrightness] = useState(75),
+    [boardOpacity, setBoardOpacity] = useState(72),
+    [videoOnly, setVideoOnly] = useState(false);
   const [status, setStatus] = useState("loading"),
     [error, setError] = useState(""),
     [videoError, setVideoError] = useState("");
@@ -38,7 +42,8 @@ export default function Session({ config, bindings, onExit, onResult }) {
       completed = false,
       lastVideoSync = 0,
       stopInput = () => {},
-      metadataDeadline = 0;
+      metadataDeadline = 0,
+      viewingVideo = false;
     const offset = config.offset / 1000;
     const phase = (value) => {
       state = value;
@@ -95,6 +100,19 @@ export default function Session({ config, bindings, onExit, onResult }) {
       toggle: () =>
         ["playing", "buffering"].includes(state) ? pause() : play(),
       pause,
+      videoControls: (show) => {
+        pause();
+        viewingVideo = show;
+        if (!show) {
+          transport?.pause();
+          backdrop?.pauseVideo();
+          if (
+            game &&
+            Math.abs(transport.getTime() - offset - game.lastTime) > 0.25
+          )
+            game.reset(transport.getTime() - offset);
+        }
+      },
     };
     const tick = (now) => {
       if (disposed) return;
@@ -154,12 +172,13 @@ export default function Session({ config, bindings, onExit, onResult }) {
           held,
           false,
           bindings.slice(0, 5).map(bindingLabel),
+          highwayOpacity.current,
         );
         if (now - lastHud > 70 && state !== "finished") {
           setHud(snapshot(chartTime));
           lastHud = now;
         }
-        if (backdrop && now - lastVideoSync > 700) {
+        if (backdrop && !viewingVideo && now - lastVideoSync > 700) {
           const target = mediaTime + config.videoOffset;
           if (
             state === "playing" &&
@@ -209,7 +228,12 @@ export default function Session({ config, bindings, onExit, onResult }) {
           const player = await createVideo(node, config.videoId, {
             signal: abort.signal,
             onState: (value) => {
-              if (!transport || disposed || completed) return;
+              if (!transport || disposed || completed || state === "error")
+                return;
+              if (viewingVideo) {
+                transport.playing = false;
+                return;
+              }
               transport.playing = value === 1;
               if (value === 0) finish();
               else if (value === 1) phase(game ? "playing" : "buffering");
@@ -220,6 +244,7 @@ export default function Session({ config, bindings, onExit, onResult }) {
               if (!disposed) {
                 setError(cause.message);
                 pause();
+                phase("error");
               }
             },
             onBlocked: () => {
@@ -262,6 +287,7 @@ export default function Session({ config, bindings, onExit, onResult }) {
           bindings,
           (values, edges) => {
             held = values.slice(0, 5);
+            if (viewingVideo) return;
             if (edges[7]) runtime.current?.toggle();
             if (state !== "playing" || !transport.playing || !game) return;
             const time = transport.getTime() - offset;
@@ -306,7 +332,16 @@ export default function Session({ config, bindings, onExit, onResult }) {
   }, [config, bindings, onResult]);
 
   return (
-    <main className="session">
+    <main
+      className={`session ${config.videoId ? "immersive-stage" : ""} ${videoOnly ? "video-only" : ""}`}
+      style={{ "--video-brightness": brightness / 100 }}
+    >
+      {config.videoId && (
+        <div className="stage-backdrop">
+          <div ref={videoHost} className="backdrop-player" />
+          <div className="backdrop-shade" />
+        </div>
+      )}
       <header className="session-header">
         <button className="text-button" onClick={onExit}>
           ← Back to studio
@@ -329,6 +364,43 @@ export default function Session({ config, bindings, onExit, onResult }) {
           Fullscreen ⛶
         </button>
       </header>
+      {config.videoId && (
+        <div className="immersion-controls">
+          <span className="eyebrow">ON THE MAIN STAGE</span>
+          <label>
+            Video brightness
+            <input
+              type="range"
+              min="25"
+              max="100"
+              value={brightness}
+              onChange={(e) => setBrightness(Number(e.target.value))}
+            />
+          </label>
+          <label>
+            Highway opacity
+            <input
+              type="range"
+              min="25"
+              max="100"
+              value={boardOpacity}
+              onChange={(e) => {
+                setBoardOpacity(Number(e.target.value));
+                highwayOpacity.current = Number(e.target.value) / 100;
+              }}
+            />
+          </label>
+          <button
+            onClick={() => {
+              const next = !videoOnly;
+              runtime.current?.videoControls(next);
+              setVideoOnly(next);
+            }}
+          >
+            {videoOnly ? "Back to fretboard" : "Video controls"}
+          </button>
+        </div>
+      )}
       <div className="stage-layout">
         <aside className="score-panel">
           <span className="eyebrow">ON STAGE</span>
@@ -430,16 +502,24 @@ export default function Session({ config, bindings, onExit, onResult }) {
                 </button>
               )}
               {error && <p role="alert">{error}</p>}
+              {error && config.videoId && (
+                <a
+                  className="error-video-link"
+                  href={`https://www.youtube.com/watch?v=${config.videoId}`}
+                  target="_blank"
+                  rel="noopener"
+                >
+                  Open this video on YouTube ↗
+                </a>
+              )}
             </div>
           )}
         </section>
         <aside className="stage-video">
           <span className="eyebrow">
-            {config.videoId ? "MUSIC VIDEO" : "STUDIO SESSION"}
+            {config.videoId ? "LIVE BACKDROP" : "STUDIO SESSION"}
           </span>
-          {config.videoId ? (
-            <div ref={videoHost} className="video-frame" />
-          ) : (
+          {!config.videoId && (
             <div className="vinyl-art" aria-hidden="true">
               <div>
                 VH

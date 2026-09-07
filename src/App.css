@@ -1176,3 +1176,182 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+.tempo-detection {
+  padding: 16px;
+  margin: 18px 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #111518;
+}
+.tempo-detection > strong {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--acid);
+}
+.tempo-detection > p {
+  margin: 8px 0 12px;
+}
+
+/* The music video is a single full-stage layer behind the game, never a thumbnail. */
+.immersive-stage {
+  position: relative;
+  isolation: isolate;
+  max-width: none;
+  min-height: 100svh;
+  overflow: hidden;
+}
+.stage-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: #080b10;
+}
+.backdrop-player {
+  position: absolute;
+  inset: 0;
+  filter: brightness(var(--video-brightness));
+}
+.backdrop-player iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+.backdrop-shade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      90deg,
+      #080b10aa,
+      transparent 35%,
+      transparent 65%,
+      #080b10aa
+    ),
+    linear-gradient(#080b1080, transparent 30%, #080b1033 85%, #080b1077);
+}
+.immersive-stage .session-header {
+  position: relative;
+  background: #10141888;
+  padding: 0 20px;
+  margin: 0 -20px;
+}
+.immersion-controls {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  min-height: 60px;
+  padding: 9px 0;
+}
+.immersion-controls > span {
+  margin-right: auto;
+}
+.immersion-controls label {
+  font-size: 10px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  white-space: nowrap;
+  text-shadow: 0 1px 5px #000;
+}
+.immersion-controls input {
+  width: 95px;
+}
+.immersion-controls button {
+  font-size: 10px;
+  background: #111417bc;
+}
+.immersive-stage .stage-layout {
+  height: calc(100svh - 220px);
+  max-width: 1440px;
+  margin: auto;
+}
+.immersive-stage .score-panel,
+.immersive-stage .stage-video {
+  text-shadow:
+    0 2px 12px #000,
+    0 1px 4px #000;
+}
+.immersive-stage .score-panel p,
+.immersive-stage .stage-video p {
+  color: #d1d4d3;
+}
+.immersive-stage .stage-video {
+  align-self: start;
+  padding: 25px 18px;
+  margin-top: 30px;
+  border: 1px solid #ffffff16;
+  border-radius: 8px;
+  background: #101418a6;
+}
+.immersive-stage .stage-overlay {
+  background: radial-gradient(
+    ellipse,
+    #111417eb 15%,
+    #111417b0 55%,
+    transparent 75%
+  );
+}
+.immersive-stage .playback-footer {
+  position: relative;
+  background: #101418a6;
+  padding: 20px;
+  margin: 0 -20px;
+}
+.video-only .stage-layout,
+.video-only .playback-footer {
+  visibility: hidden;
+  pointer-events: none;
+}
+.video-only .backdrop-shade {
+  display: none;
+}
+.video-only .backdrop-player {
+  filter: none;
+}
+.video-only .stage-backdrop {
+  z-index: 0;
+}
+.video-only .session-header,
+.video-only .immersion-controls {
+  position: relative;
+  z-index: 1;
+}
+.error-video-link {
+  font-size: 12px;
+  color: var(--acid);
+}
+@media (max-width: 760px) {
+  .immersion-controls {
+    flex-wrap: wrap;
+    gap: 9px 16px;
+    padding: 12px 0;
+  }
+  .immersion-controls > span {
+    width: 100%;
+  }
+  .immersion-controls label {
+    font-size: 9px;
+  }
+  .immersion-controls input {
+    width: 65px;
+  }
+  .immersive-stage .stage-layout {
+    height: auto;
+  }
+  .immersive-stage .stage-video {
+    margin-top: 0;
+    padding: 15px;
+    display: block;
+  }
+  .immersive-stage .stage-video h3 {
+    margin-top: 9px;
+  }
+  .immersive-stage .stage-video .set-controls {
+    margin-top: 12px;
+  }
+}
+.tempo-multiples {
+  margin-top: 10px;
+}

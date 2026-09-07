@@ -1,4 +1,20 @@
 let apiPromise;
+export function youtubePlaybackError(code) {
+  const messages = {
+    2: "The YouTube video link is invalid (error 2). Check the URL and try again.",
+    5: "The browser could not play this YouTube video (error 5). Try a regular browser or another recording.",
+    100: "YouTube reports that this video was removed or is private (error 100). Choose another recording.",
+    101: "The video owner does not allow embedded playback (YouTube error 101). It may play on YouTube itself, but cannot play inside Vibe Hero. Choose an embeddable upload or use your local audio file.",
+    150: "The video owner does not allow embedded playback (YouTube error 150). It may play on YouTube itself, but cannot play inside Vibe Hero. Choose an embeddable upload or use your local audio file.",
+    153: "YouTube could not identify this embedded player (error 153). This is a browser/referrer configuration issue, not an owner embedding restriction. Try opening Vibe Hero in a regular browser.",
+  };
+  const error = new Error(
+    messages[code] ||
+      `YouTube playback failed (error ${code}). The cause is unknown; try another recording or local audio.`,
+  );
+  error.code = code;
+  return error;
+}
 export function youtubeAPI() {
   if (window.YT?.Player) return Promise.resolve(window.YT);
   if (apiPromise) return apiPromise;
@@ -73,9 +89,7 @@ export async function createVideo(element, id, handlers = {}) {
         onStateChange: (event) => handlers.onState?.(event.data),
         onError: (event) => {
           cleanup();
-          const error = new Error(
-            `YouTube cannot play this video (${event.data}). It may be restricted or unavailable.`,
-          );
+          const error = youtubePlaybackError(event.data);
           reject(error);
           handlers.onError?.(error);
         },

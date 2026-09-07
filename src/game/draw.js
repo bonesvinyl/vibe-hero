@@ -8,6 +8,7 @@ export function drawHighway(
   held = [],
   preview = false,
   labels = ["A", "S", "D", "F", "G"],
+  highwayOpacity = 1,
 ) {
   const width = canvas.clientWidth,
     height = canvas.clientHeight,
@@ -56,7 +57,9 @@ export function drawHighway(
   ctx.lineTo(lowerLeft.x, lowerLeft.y);
   ctx.closePath();
   ctx.fillStyle = fill;
+  ctx.globalAlpha = highwayOpacity;
   ctx.fill();
+  ctx.globalAlpha = 1;
   for (let lane = 0; lane <= 5; lane++)
     line(
       project(lane, 0),
