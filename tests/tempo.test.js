@@ -27,10 +27,10 @@ test("silence and insufficient samples do not fabricate a tempo", () => {
   assert.equal(estimateTempo(Array(2000).fill(0), 100).bpm, null);
   assert.equal(estimateTempo(Array(100).fill(1), 100).bpm, null);
 });
-test("YouTube 150 is an owner embedding restriction; 153 is a different configuration failure", () => {
+test("YouTube embed refusal and identity failures offer distinct recovery paths", () => {
   assert.match(
     youtubePlaybackError(150).message,
-    /owner does not allow embedded playback/,
+    /refused embedded playback/,
   );
   assert.match(youtubePlaybackError(153).message, /configuration issue/);
   assert.match(youtubePlaybackError(999).message, /cause is unknown/);

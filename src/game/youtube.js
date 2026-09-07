@@ -4,8 +4,8 @@ export function youtubePlaybackError(code) {
     2: "The YouTube video link is invalid (error 2). Check the URL and try again.",
     5: "The browser could not play this YouTube video (error 5). Try a regular browser or another recording.",
     100: "YouTube reports that this video was removed or is private (error 100). Choose another recording.",
-    101: "The video owner does not allow embedded playback (YouTube error 101). It may play on YouTube itself, but cannot play inside Vibe Hero. Choose an embeddable upload or use your local audio file.",
-    150: "The video owner does not allow embedded playback (YouTube error 150). It may play on YouTube itself, but cannot play inside Vibe Hero. Choose an embeddable upload or use your local audio file.",
+    101: "YouTube refused embedded playback (error 101). Try playing on YouTube with the Vibe Hero extension below. If every song fails here, the cause needs investigation; this message alone does not establish why your whole library fails.",
+    150: "YouTube refused embedded playback (error 150). Try playing on YouTube with the Vibe Hero extension below. If every song fails here, the cause needs investigation; this message alone does not establish why your whole library fails.",
     153: "YouTube could not identify this embedded player (error 153). This is a browser/referrer configuration issue, not an owner embedding restriction. Try opening Vibe Hero in a regular browser.",
   };
   const error = new Error(

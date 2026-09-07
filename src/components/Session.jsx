@@ -5,6 +5,7 @@ import { createVideo } from "../game/youtube";
 import { bindingLabel, listenInput } from "../game/controller";
 import { drawHighway } from "../game/draw";
 import { SampledMediaClock } from "../game/clock";
+import { youtubeWatchHandoff } from "../game/handoff";
 
 const formatTime = (time) =>
   `${Math.floor(Math.max(0, time) / 60)}:${String(Math.floor(Math.max(0, time)) % 60).padStart(2, "0")}`;
@@ -503,14 +504,17 @@ export default function Session({ config, bindings, onExit, onResult }) {
               )}
               {error && <p role="alert">{error}</p>}
               {error && config.videoId && (
+                <div>
                 <a
                   className="error-video-link"
-                  href={`https://www.youtube.com/watch?v=${config.videoId}`}
+                  href={youtubeWatchHandoff(config.videoId, config)}
                   target="_blank"
                   rel="noopener"
                 >
-                  Open this video on YouTube ↗
+                  Play on YouTube with Vibe Hero ↗
                 </a>
+                <p style={{ fontSize: "0.85rem" }}>Requires the free local extension. <a href="/play-on-youtube.html" target="_blank" rel="noopener">One-time setup ↗</a>. Your BPM and timing carry over; import custom charts again.</p>
+                </div>
               )}
             </div>
           )}

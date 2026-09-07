@@ -31,3 +31,10 @@ This is a reviewable browser implementation. Subscription-streaming connections,
 Added synthetic pulse tests at 75, 90, 120, 155 and 180 BPM with offbeat fills; silence/short-input tests; distinct YouTube error 150/153 mappings; and mocked capture lifecycle tests covering audio-only recording, no-audio selection, cancellation during the picker, active cancellation, and releasing every sharing track.
 
 The user reports error 150 for the Judas Priest video WtuoFv4dcwM. This matches YouTube's documented owner-embedding restriction; the browser tool still cannot inspect live playback because the enforced-policy check is unavailable. The restored full-stage backdrop, native video-control view, brightness/opacity sliders, tab sharing, actual captured-container decoding, and detection on commercial recordings require live browser acceptance. Code/tests passing do not establish those results.
+
+
+## Native YouTube fallback follow-up
+
+The user subsequently reported all attempted songs failing and supplied a screenshot of Led Zeppelin with error 150. There is no verified explanation for the difference from the original app. A native-watch-page extension was added as a separate playback path, using the existing YouTube video instead of an embedded player. The embed origin is real and the page now declares a referrer policy explicitly; no confirmed embed repair is claimed.
+
+All 31 Node tests, lint, app build, and extension build pass. A synthetic DOM/media lifecycle test verifies video-clock scoring, pause stability, waiting through ads, and listener cleanup; it is not a real browser or YouTube test. Additional automated checks cover handoff round-trips, settings bounds, malformed hashes, and exclusion of local media/credentials from URLs. The extension bundles with no new runtime dependencies. Live extension installation, watch-page injection, synchronization, video-frame drawing, pause/seek, fullscreen, keyboard conflicts, ads, source changes, and cleanup still need acceptance testing. Browser access was again refused by the tool policy verifier; no alternate automation route was attempted.
