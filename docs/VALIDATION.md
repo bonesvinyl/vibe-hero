@@ -128,3 +128,9 @@ Validation: 67 Node tests, ESLint, both production builds and diff checks pass. 
 Homepage moved to a concert-poster landing page; the existing game remains at /play. It links the current extension 0.10.0 ZIP and a validated 49-chart indie starter pack, provides an expandable track list and explains bulk pack import into the extension's local library. Pricing is $9.99 one time, explicitly planned: checkout is not connected and the beta is free. No payment or entitlement system is represented as live. Self-service URL playlist processing and a standalone Mac binary remain unavailable.
 
 ESLint, 67 automated tests and production builds passed. Starter pack imported all 49 records into synthetic storage and the extension ZIP passed integrity/version checks. Browser visual inspection was attempted, but admin-policy verification denied access; no live visual acceptance is claimed. Vercel production and domain verification are recorded in the task delivery.
+
+
+## Song library 0.11
+Compact collection sidebar and 20-row pagination replace the infinite song/score card lists. Indie and Yacht packs are recognized by exact recording IDs. New imports create named genre-tagged packs. Custom setlists support drag/drop membership and ordering, bulk selection and keyboard reorder buttons. Titles and genre overrides use separate vh.song keys, preserving chart data through re-preparation. Scores are grouped by exact recording, including score-only recordings without charts. Finished preparation notices use a dismissal marker; active preparation is never deleted.
+
+73 Node tests, lint, extension build and ZIP integrity passed. Text/background contrast exceeds 4.5:1. Browser inspection attempted and denied by admin-policy verification; drag/drop visual and real-extension acceptance remain unverified. Reload the existing extension installation to retain Chrome storage.
