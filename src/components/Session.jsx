@@ -4,6 +4,7 @@ import { AudioTransport } from "../game/audio";
 import { createVideo } from "../game/youtube";
 import { bindingLabel, listenInput } from "../game/controller";
 import { drawHighway } from "../game/draw";
+import { CrowdAudio } from "../game/crowd";
 import { SampledMediaClock } from "../game/clock";
 import { youtubeWatchHandoff } from "../game/handoff";
 
@@ -14,7 +15,9 @@ export default function Session({ config, bindings, onExit, onResult }) {
   const canvas = useRef(null),
     videoHost = useRef(null),
     runtime = useRef(null),
-    highwayOpacity = useRef(0.72);
+    highwayOpacity = useRef(0.72),
+    crowdRef = useRef(null),
+    crowdVolume = useRef(0.18);
   const [brightness, setBrightness] = useState(75),
     [boardOpacity, setBoardOpacity] = useState(72),
     [videoOnly, setVideoOnly] = useState(false);
@@ -32,6 +35,8 @@ export default function Session({ config, bindings, onExit, onResult }) {
   });
   useEffect(() => {
     const abort = new AbortController();
+    const crowd = new CrowdAudio(file => `/sounds/${file}`);
+    crowd.setVolume(crowdVolume.current); crowdRef.current = crowd;
     let disposed = false,
       frame,
       lastHud = 0,
@@ -65,6 +70,7 @@ export default function Session({ config, bindings, onExit, onResult }) {
       feedback: time < game.feedbackUntil ? game.feedback : "",
     });
     const pause = () => {
+      crowd.stop();
       if (!transport || !["playing", "buffering"].includes(state)) return;
       transport.pause();
       backdrop?.pauseVideo();
@@ -73,6 +79,7 @@ export default function Session({ config, bindings, onExit, onResult }) {
     const finish = () => {
       if (!game || completed) return;
       completed = true;
+      crowd.stop();
       const time = transport.getTime() - offset;
       // Resolve the final window without interpreting completion as a seek.
       game.lastTime = Math.max(time, transport.duration + 0.15);
@@ -87,6 +94,7 @@ export default function Session({ config, bindings, onExit, onResult }) {
     const play = async () => {
       if (!transport || completed || disposed) return;
       try {
+        crowd.unlock();
         await transport.play();
         if (!disposed) {
           if (!game) metadataDeadline = performance.now() + 15000;
@@ -154,7 +162,8 @@ export default function Session({ config, bindings, onExit, onResult }) {
       if (game && transport) {
         const mediaTime = transport.getTime(),
           chartTime = mediaTime - offset;
-        if (state === "playing" && transport.playing) { game.update(chartTime); game.updateHolds(chartTime, held); }
+        if (state === "playing" && transport.playing) { game.update(chartTime); game.updateHolds(chartTime, held); crowd.update(game, chartTime); }
+        else crowd.stop();
         if (
           state === "playing" &&
           mediaTime >= transport.duration + Math.max(0, offset) + 0.15
@@ -323,6 +332,7 @@ export default function Session({ config, bindings, onExit, onResult }) {
     document.addEventListener("visibilitychange", hidden);
     return () => {
       disposed = true;
+      crowd.destroy(); crowdRef.current = null;
       abort.abort();
       cancelAnimationFrame(frame);
       stopInput();
@@ -365,6 +375,12 @@ export default function Session({ config, bindings, onExit, onResult }) {
         >
           Fullscreen ⛶
         </button>
+        <label className="small">Crowd
+          <input aria-label="Crowd volume; zero mutes" type="range" min="0" max="40" defaultValue="18" onChange={event => {
+            crowdVolume.current = Number(event.target.value) / 100;
+            crowdRef.current?.setVolume(crowdVolume.current);
+          }} />
+        </label>
       </header>
       {config.videoId && (
         <div className="immersion-controls">

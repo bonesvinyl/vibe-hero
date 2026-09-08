@@ -144,3 +144,10 @@ The resulting chart follows attacks without snapping them to BPM, excludes detec
 Choose **Save chart** before playing or after finishing to keep a reusable JSON file. Exports identify the YouTube video; importing a chart tagged for a different video fails clearly. A song library can consist of these files plus their recording IDs. Features themselves are not persisted. Reload the updated unpacked extension, then refresh the YouTube page before testing.
 
 For guitar-specific charts, use an isolated guitar recording with the local-audio analyzer and import its chart against the matching video. A stronger future batch pipeline would separate the guitar, run polyphonic transcription, simplify pitches/chords into five-fret difficulty arrangements, then review timing and rests per recording. [Basic Pitch](https://github.com/spotify/basic-pitch) supports polyphony and works best on one instrument at a time; [Demucs](https://github.com/facebookresearch/demucs) is a source-separation research option, not an implemented dependency here. This update does not claim automated guitar isolation or a completed 100-song library.
+
+
+## Crowd reactions (native 0.4.1)
+
+Restores the original repository’s cheer1/cheer2/boo1/boo2 MP3 recordings in both the web app and native extension. Ten-note streak milestones and bonus activation can cheer; ten seconds of continuing misses can boo. Musical rests do not count as misses. Reactions have an eight-second song-clock cooldown, use short faded clips, and never overlap. Crowd volume defaults to 18%; set the separate Crowd slider to zero to mute. Pauses, buffering, ads, pre-listening and exit stop pending/active crowd playback. The original recordings are packaged locally; extension audio resources are exposed only to YouTube origins, with no new permissions.
+
+Reload extension 0.4.1 and refresh the YouTube page. Actual audible playback and mixing still need browser acceptance; automated checks cover trigger/cooldown logic and cancellation of asynchronously loaded sounds.

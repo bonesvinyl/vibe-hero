@@ -47,3 +47,8 @@ The user confirmed native 0.3 gameplay works and supplied a screenshot. This sup
 37 Node tests pass, including new hold scoring/early release/seek reset, duration and overlap rejection, synthetic audio rests/sustains/difficulty accents, and mocked pre-listen timestamps, ad/pause exclusion, seek rejection, capture cancellation and cleanup. Lint and both builds pass. A fresh browser inspection attempt was again rejected by the enforced-policy verifier; no indirect workaround was used.
 
 Remaining acceptance: reload extension 0.4, listen through the same Whole Lotta Love recording with this tab’s audio shared, replay and calibrate if needed; inspect the gems and tails, complete/release a chord sustain, trigger the bonus via Space and button, exercise mid-roll/paused listening, save/import the matching chart and reject a mismatched recording. Confirm audio capture and scoring on the actual browser. Full-mix detection does not establish guitar-only accuracy or absence of notes during guitar rests when other instruments continue.
+
+
+## Crowd restoration
+
+Confirmed the four MP3 assets and crowd logic in original commit 3825830. Restored playback through a shared crowd controller in the app and extension. All 40 tests and lint pass; both builds pass. New tests cover milestone/bonus cooldowns, sustained misses versus rests/seeks, and suppression of pending audio after pause/mute/disposal. The package contains all four original assets. Actual sound balance and browser resource/audio permissions remain unverified here.
