@@ -52,3 +52,12 @@ Remaining acceptance: reload extension 0.4, listen through the same Whole Lotta 
 ## Crowd restoration
 
 Confirmed the four MP3 assets and crowd logic in original commit 3825830. Restored playback through a shared crowd controller in the app and extension. All 40 tests and lint pass; both builds pass. New tests cover milestone/bonus cooldowns, sustained misses versus rests/seeks, and suppression of pending audio after pause/mute/disposal. The package contains all four original assets. Actual sound balance and browser resource/audio permissions remain unverified here.
+
+
+## Native 0.5 save repair and quiet preparation
+
+The user's screenshot showed the initial BPM-practice-grid state after reported full-song listening, with no saved confirmation. The former Save action merely clicked a download link; no persistent library existed. Listener polling also checked ads before completion, and navigation removed the overlay's in-memory chart. These are source-confirmed failure paths, not a live diagnosis of the exact screenshot.
+
+45 Node tests and lint pass. Extension bundles include separate background/offscreen/player-bridge/library files. Tests cover persistent chart round-trip and quota errors, original-duration completion before a post-song ad, user-invoked capture/busy gating, stale/ad/pause clock suspension, and a synthetic offscreen lifecycle proving save-before-ready plus pause-before-capture-release on completion/cancellation/failure. These are mocks, not browser integration. The Downloads folder was inaccessible to the shell, so existence of a previous downloaded JSON could not be checked.
+
+Live acceptance remains: approve the updated extension's storage/capture permissions if prompted, prepare a short video from its popup, switch away, verify silence and progress, cancel once, complete once with an ad transition, reopen and load the saved chart, inspect JSON backup in browser Downloads. Verify Chrome/Brave offscreen resource loading, user-gesture capture eligibility, autoplay, context lifetime, save errors and library restoration. The existing browser-policy block prevents that verification here. No claim of a shipped server or unattended playlist queue is made.

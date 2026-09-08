@@ -67,3 +67,15 @@ test('seeking rejects an incomplete chart and active cancellation closes the aud
     } finally { f.restore(); }
   }
 });
+
+test('an immediate post-song ad cannot hide completion or replace the original song duration', async () => {
+  const f = environment();
+  try {
+    const result = listenToSong(f.video, f.options); await settle();
+    for (let i = 1; i <= 98; i++) { f.video.currentTime = i / 10; f.tick(); }
+    f.setAd(true); f.video.duration = 30; f.video.currentTime = 0; f.video.ended = false; f.tick();
+    const frames = await result;
+    assert.ok(frames.at(-1).time >= 9.75);
+    assert.ok(f.tracks.every(track => track.readyState === 'ended'));
+  } finally { f.restore(); }
+});

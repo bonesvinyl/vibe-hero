@@ -11,6 +11,7 @@ export async function listenToSong(video, { signal, isAd, onProgress }) {
     if (!stream.getAudioTracks().length) throw new Error('Select this YouTube tab and enable Share tab audio.');
     if (isAd()) throw new Error('Let the ad finish, then start listening again.');
     if (!Number.isFinite(video.duration) || video.duration < 3 || video.duration > 1200) throw new Error('Choose a song between 3 seconds and 20 minutes.');
+    const songDuration = video.duration;
     context = new AudioContext();
     await context.resume();
     source = context.createMediaStreamSource(stream);
@@ -24,13 +25,20 @@ export async function listenToSong(video, { signal, isAd, onProgress }) {
     if (signal.aborted) throw new DOMException("Cancelled", "AbortError");
     return await new Promise((resolve, reject) => {
       const fail = error => { clearInterval(timer); reject(error); };
-      const abort = () => { signal.removeEventListener('abort', abort); fail(new DOMException('Cancelled', 'AbortError')); };
+      const abort = () => { finish(); fail(new DOMException('Cancelled', 'AbortError')); };
       signal.addEventListener('abort', abort, { once: true });
-      const finish = () => { signal.removeEventListener('abort', abort); clearInterval(timer); };
+      const finish = () => { signal.removeEventListener('abort', abort); video.removeEventListener?.('ended', ended); clearInterval(timer); };
+      const complete = () => { finish(); resolve(frames); };
+      // Use the captured song duration: an immediately following ad can replace
+      // both video.duration and video.ended before the next polling callback.
+      const capturedEnd = () => frames.length > 0 && frames.at(-1).time >= songDuration - 0.25;
+      const ended = () => { if (!isAd() && capturedEnd()) complete(); };
+      video.addEventListener?.('ended', ended);
       timer = setInterval(() => {
         try {
           if (signal.aborted) throw new DOMException('Cancelled', 'AbortError');
           if (stream.getTracks().some(track => track.readyState === 'ended')) throw new Error('Sharing stopped. Listen again to generate a complete chart.');
+          if (capturedEnd()) { complete(); return; }
           if (isAd()) { wasAd = true; return; }
           if (wasAd) { previous.fill(0); warmup = true; lastTime = video.currentTime; wasAd = false; }
           if (video.error) throw new Error('YouTube playback failed during analysis.');
@@ -50,7 +58,7 @@ export async function listenToSong(video, { signal, isAd, onProgress }) {
           if (warmup) { previous = next; lastTime = video.currentTime; warmup = false; return; }
           frames.push({ time: video.currentTime, flux, tone: flux ? weighted / flux : 0, energy: Math.sqrt(energy / wave.length) });
           previous = next; lastTime = video.currentTime;
-          onProgress(video.currentTime / video.duration);
+          onProgress(video.currentTime / songDuration);
         } catch (error) { finish(); fail(error); }
       }, 20);
     });

@@ -3,6 +3,7 @@ import { Game, practiceChart, validateChart, KEYS } from '../src/game/chart.js';
 import { drawHighway } from '../src/game/draw.js';
 import { nativeSettings, parseHandoff } from '../src/game/handoff.js';
 import styles from './overlay.css?inline';
+import { saveChart, loadChart } from './chart-store.js';
 import { CrowdAudio } from '../src/game/crowd.js';
 import { listenToSong } from './listen.js';
 import { chartFromFrames } from '../src/game/chart-analysis.js';
@@ -15,12 +16,12 @@ function mount() {
   const initialId = new URL(location.href).searchParams.get('v');
   const host = document.createElement('div'); host.id = 'vibe-hero-native-overlay';
   const root = host.attachShadow({ mode: 'open' });
-  root.innerHTML = `<style>${styles}</style><section class="stage"><canvas class="backdrop"></canvas><div class="shade"></div><header><strong>vibe<span>hero</span></strong><span class="native-label">ON YOUTUBE · NATIVE PLAYER</span><button data-action="minimize">YouTube controls</button><button data-action="fullscreen">Fullscreen</button><button data-action="close" aria-label="Close Vibe Hero">×</button></header><aside class="score"><span class="eyebrow">ON STAGE</span><h1></h1><strong class="points">0</strong><p class="stats">0 streak · 0% hit</p><p class="power">Star power: 0%</p><p class="hint">A S D F G · Enter pauses<br />Space activates star power</p></aside><aside class="meters"><div class="multiplier">1×</div><span>COMBO MULTIPLIER</span><progress class="combo-meter" max="10" value="0"></progress><div class="streak-count">0 note streak</div><h3>STAR POWER</h3><progress class="energy-meter" max="100" value="0"></progress><button data-action="bonus" class="bonus" disabled>Build your streak</button><p class="bonus-help">Hit notes to charge.<br>At 100%, press Space for<br>8 seconds of double points.</p></aside><canvas class="highway"></canvas><div class="feedback"></div><div class="setup"><h2>Play it where it plays.</h2><p class="status" role="status">YouTube handles the video. Vibe Hero follows its playback clock.</p><div class="fields"><label>BPM<input id="bpm" type="number" min="40" max="240" /></label><label>First beat (sec)<input id="firstBeat" type="number" min="0" max="120" step="0.05" /></label><label>Timing (ms)<input id="offset" type="number" min="-500" max="500" step="5" /></label><label>Difficulty<select id="difficulty"><option value="easy">Easy</option><option value="medium">Medium</option><option value="expert">Expert</option></select></label><label>Play style<select id="mode"><option value="tap">Keyboard / tap</option><option value="strum">Frets + arrow strum</option></select></label></div><div class="buttons"><button data-action="listen" class="primary">Listen &amp; build chart</button><button data-action="cancel-listen" hidden>Cancel listening</button><button data-action="export" disabled>Save chart</button></div><p class="listen-help">Share this YouTube tab’s audio. Let the song play once; then replay with audio-driven notes and automatic BPM. Full-mix analysis, not guitar isolation.</p><div class="buttons"><button data-action="tap">Tap tempo</button><label class="file-label">Import chart<input type="file" accept=".json" id="chart" /></label><button class="primary" data-action="start">Play from beginning ▷</button></div><p class="chart-status">BPM practice grid · Bring detected BPM from the app or import an authored chart.</p></div><button class="resume" data-action="minimize">Return to fretboard ↗</button><footer><button data-action="pause">Pause / resume</button><span class="time">0:00</span><span>Music video stays behind the frets.</span><label>Crowd<input id="crowd-volume" aria-label="Crowd volume; zero mutes" type="range" min="0" max="40" value="18" /></label><label>Brightness<input id="brightness" type="range" min="25" max="100" value="75" /></label></footer></section>`;
+  root.innerHTML = `<style>${styles}</style><section class="stage"><canvas class="backdrop"></canvas><div class="shade"></div><header><strong>vibe<span>hero</span></strong><span class="native-label">ON YOUTUBE · NATIVE PLAYER</span><button data-action="minimize">YouTube controls</button><button data-action="fullscreen">Fullscreen</button><button data-action="close" aria-label="Close Vibe Hero">×</button></header><aside class="score"><span class="eyebrow">ON STAGE</span><h1></h1><strong class="points">0</strong><p class="stats">0 streak · 0% hit</p><p class="power">Star power: 0%</p><p class="hint">A S D F G · Enter pauses<br />Space activates star power</p></aside><aside class="meters"><div class="multiplier">1×</div><span>COMBO MULTIPLIER</span><progress class="combo-meter" max="10" value="0"></progress><div class="streak-count">0 note streak</div><h3>STAR POWER</h3><progress class="energy-meter" max="100" value="0"></progress><button data-action="bonus" class="bonus" disabled>Build your streak</button><p class="bonus-help">Hit notes to charge.<br>At 100%, press Space for<br>8 seconds of double points.</p></aside><canvas class="highway"></canvas><div class="feedback"></div><div class="setup"><h2>Play it where it plays.</h2><p class="status" role="status">YouTube handles the video. Vibe Hero follows its playback clock.</p><div class="fields"><label>BPM<input id="bpm" type="number" min="40" max="240" /></label><label>First beat (sec)<input id="firstBeat" type="number" min="0" max="120" step="0.05" /></label><label>Timing (ms)<input id="offset" type="number" min="-500" max="500" step="5" /></label><label>Difficulty<select id="difficulty"><option value="easy">Easy</option><option value="medium">Medium</option><option value="expert">Expert</option></select></label><label>Play style<select id="mode"><option value="tap">Keyboard / tap</option><option value="strum">Frets + arrow strum</option></select></label></div><div class="buttons"><button data-action="listen" class="primary">Listen &amp; build chart</button><button data-action="cancel-listen" hidden>Cancel listening</button><button data-action="export" disabled>Save chart</button><button data-action="download" disabled>Download JSON backup</button><p class="save-status" role="status" aria-live="polite">No saved chart loaded.</p></div><p class="listen-help">For quiet preparation, use the extension icon → Prepare quietly in background. This manual fallback shares the tab’s audio for one playthrough. Full-mix analysis, not guitar isolation.</p><div class="buttons"><button data-action="tap">Tap tempo</button><label class="file-label">Import chart<input type="file" accept=".json" id="chart" /></label><button class="primary" data-action="start">Play from beginning ▷</button></div><p class="chart-status">BPM practice grid · Bring detected BPM from the app or import an authored chart.</p></div><button class="resume" data-action="minimize">Return to fretboard ↗</button><footer><button data-action="pause">Pause / resume</button><span class="time">0:00</span><span>Music video stays behind the frets.</span><label>Crowd<input id="crowd-volume" aria-label="Crowd volume; zero mutes" type="range" min="0" max="40" value="18" /></label><label>Brightness<input id="brightness" type="range" min="25" max="100" value="75" /></label></footer></section>`;
   document.documentElement.append(host);
   const $ = selector => root.querySelector(selector);
   const stage = $('.stage'), canvas = $('.highway'), backdrop = $('.backdrop'), context = backdrop.getContext('2d');
   const status = $('.status'), setup = $('.setup');
-  let settings = parseHandoff(location.hash), game = null, video = null, started = false, frame, minimized = false, closed = false, chart = null, taps = [], lastHud = 0, lastAd = false, backdropFailed = false, listening = null, audioFrames = null;
+  let settings = parseHandoff(location.hash), game = null, video = null, started = false, frame, minimized = false, closed = false, chart = null, taps = [], lastHud = 0, lastAd = false, backdropFailed = false, listening = null, audioFrames = null, chartDuration = null;
   const held = new Set();
   const crowd = new CrowdAudio(file => chrome.runtime.getURL(`sounds/${file}`));
   for (const key of ['bpm', 'firstBeat', 'offset', 'difficulty', 'mode']) $(`#${key}`).value = settings[key];
@@ -34,7 +35,7 @@ function mount() {
   }
   function cleanup() {
     if (closed) return;
-    closed = true; crowd.destroy(); listening?.abort(); cancelAnimationFrame(frame); window.removeEventListener('keydown', keydown, true); window.removeEventListener('keyup', keyup, true); window.removeEventListener('blur', onBlur); document.removeEventListener('visibilitychange', visibility); document.removeEventListener('yt-navigate-start', cleanup); host.remove();
+    closed = true; crowd.destroy(); listening?.abort(); cancelAnimationFrame(frame); window.removeEventListener('keydown', keydown, true); window.removeEventListener('keyup', keyup, true); window.removeEventListener('blur', onBlur); document.removeEventListener('visibilitychange', visibility); host.remove();
   }
   async function start() {
     if (listening) return;
@@ -77,9 +78,10 @@ function mount() {
     if (action === 'listen') prepareChart();
     if (action === 'cancel-listen') listening?.abort();
     if (action === 'bonus' && started && video && !video.paused && !adPlaying()) game.activate(video.currentTime - settings.offset / 1000);
-    if (action === 'export' && chart) {
+    if (action === 'export') persistChart();
+    if (action === 'download' && chart) {
       const blob = new Blob([JSON.stringify({ ...chart, youtubeId: initialId, title: $('h1').textContent, bpm: Number($('#bpm').value) })], { type: 'application/json' });
-      const url = URL.createObjectURL(blob), link = document.createElement('a'); link.href = url; link.download = `vibe-hero-${initialId}.json`; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+      const url = URL.createObjectURL(blob), link = document.createElement('a'); link.href = url; link.download = `vibe-hero-${initialId}.json`; root.append(link); link.click(); link.remove(); $('.save-status').textContent = 'JSON download requested. Check your browser Downloads. Your library save is separate.'; setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
     if (action === 'start') start();
     if (action === 'pause') toggle();
@@ -97,29 +99,50 @@ function mount() {
   $('#brightness').addEventListener('input', event => stage.style.setProperty('--brightness', event.target.value / 100));
   $('#chart').addEventListener('change', async event => {
     const file = event.target.files[0]; if (!file || listening) return;
-    try { if (file.size > 2 * 1024 * 1024) throw new Error('Chart must be under 2 MB.'); const value = JSON.parse(await file.text()); if (closed) return; if (value.youtubeId && value.youtubeId !== initialId) throw new Error('This chart belongs to a different YouTube recording.'); validateChart(value, getVideo()?.duration || 1200); audioFrames = null; chart = value; $('[data-action=export]').disabled = false; $('.chart-status').textContent = `Custom chart · ${value.notes.length} notes`; }
+    try { if (file.size > 2 * 1024 * 1024) throw new Error('Chart must be under 2 MB.'); const value = JSON.parse(await file.text()); if (closed) return; if (value.youtubeId && value.youtubeId !== initialId) throw new Error('This chart belongs to a different YouTube recording.'); validateChart(value, getVideo()?.duration || 1200); audioFrames = null; chart = value; chartDuration = getVideo()?.duration || 1200; $('[data-action=export]').disabled = false; $('[data-action=download]').disabled = false; $('.chart-status').textContent = `Custom chart · ${value.notes.length} notes`; $('.save-status').textContent = 'Imported chart is ready to play. Click Save chart to keep it in your library.'; }
     catch (error) { show(error.message); }
     finally { event.target.value = ''; }
   });
+  function currentSettings() {
+    return { bpm: Number($('#bpm').value), firstBeat: Number($('#firstBeat').value), offset: Number($('#offset').value), difficulty: $('#difficulty').value, mode: $('#mode').value };
+  }
+  async function persistChart(title = $('h1').textContent) {
+    if (!chart) { if (!closed) $('.save-status').textContent = 'No chart to save yet. Wait for “Chart ready” or import a chart.'; return; }
+    if (!closed) $('.save-status').textContent = 'Saving to your Vibe Hero library…';
+    try {
+      await saveChart(chrome.storage.local, initialId, chart, chartDuration || video?.duration, currentSettings(), title);
+      if (!closed) $('.save-status').textContent = `Saved on this browser · ${chart.notes.length} notes. Reopening this video restores your chart.`;
+    } catch (error) {
+      if (!closed) $('.save-status').textContent = `Could not save: ${error.message}. Your chart is still here; retry Save chart or download a JSON backup.`;
+    }
+  }
+  loadChart(chrome.storage.local, initialId).then(record => {
+    if (!record || closed || started || listening || chart) return;
+    chart = record; chartDuration = record.duration;
+    for (const key of ['bpm', 'firstBeat', 'offset', 'difficulty', 'mode']) $(`#${key}`).value = record.settings[key];
+    $('[data-action=export]').disabled = false; $('[data-action=download]').disabled = false;
+    $('.chart-status').textContent = `Saved audio/custom chart · ${record.notes.length} notes`;
+    $('.save-status').textContent = 'Loaded from your Vibe Hero library. Ready to play—no listening needed.';
+  }).catch(error => { if (!closed) $('.save-status').textContent = `Could not load saved chart: ${error.message}`; });
   async function prepareChart() {
     if (listening) return;
     video = getVideo();
     if (!video) { show('Wait for YouTube to load the song.'); return; }
     started = false; pause();
+    const recordingDuration = video.duration, recordingTitle = $('h1').textContent;
     const abort = new AbortController(); listening = abort;
     $('[data-action=listen]').disabled = true; $('[data-action=start]').disabled = true;
     $('[data-action=cancel-listen]').hidden = false;
     show('Choose THIS YouTube tab and enable Share tab audio.');
     try {
       const frames = await listenToSong(video, { signal: abort.signal, isAd: adPlaying, onProgress: fraction => show(`Listening… ${Math.round(fraction * 100)}%. Leave playback at normal speed; no seeking. Pauses and ads are excluded.`) });
-      if (closed || abort.signal.aborted) return;
       const result = chartFromFrames(frames, $('#difficulty').value);
       if (!result.notes.length) throw new Error('No clear musical attacks detected. Check that you shared this tab’s audio.');
-      audioFrames = frames; chart = { version: 1, ...result, youtubeId: initialId };
+      audioFrames = frames; chart = { version: 1, ...result, youtubeId: initialId }; chartDuration = recordingDuration;
       if (result.bpm) $('#bpm').value = Math.round(result.bpm);
       $('.chart-status').textContent = `Audio chart · ${result.notes.length} attacks · ${result.bpm ? Math.round(result.bpm) + ' BPM estimated' : 'tempo uncertain'} · full mix`;
-      $('[data-action=export]').disabled = false;
-      show('Chart ready. Play from beginning, or save it for this exact recording. Timing adjustment can compensate for capture delay.');
+      await persistChart(recordingTitle);
+      if (!closed) { $('[data-action=export]').disabled = false; $('[data-action=download]').disabled = false; show('Chart ready. Play from beginning. Timing adjustment can compensate for capture delay.'); }
     } catch (error) { if (!closed) show(error.name === 'AbortError' ? 'Listening cancelled. Your previous chart is unchanged.' : error.message); }
     finally { listening = null; if (!closed) { $('[data-action=listen]').disabled = false; $('[data-action=start]').disabled = false; $('[data-action=cancel-listen]').hidden = true; } }
   }
@@ -166,6 +189,6 @@ function mount() {
     frame = requestAnimationFrame(tick);
   }
   host.addEventListener('vibe-hero-close', cleanup, { once: true });
-  window.addEventListener('keydown', keydown, true); window.addEventListener('keyup', keyup, true); window.addEventListener('blur', onBlur); document.addEventListener('visibilitychange', visibility); document.addEventListener('yt-navigate-start', cleanup);
+  window.addEventListener('keydown', keydown, true); window.addEventListener('keyup', keyup, true); window.addEventListener('blur', onBlur); document.addEventListener('visibilitychange', visibility);
   frame = requestAnimationFrame(tick);
 }
