@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { drawHighway } from "../game/draw";
 
-export default function HighwayPreview() {
+export default function HighwayPreview({ animated = false }) {
   const canvas = useRef(null);
   useEffect(() => {
     const game = {
@@ -12,12 +12,18 @@ export default function HighwayPreview() {
         lanes: [[2], [0], [1], [3], [2], [4], [1], [2]][i],
       })),
     };
-    const render = () => drawHighway(canvas.current, game, 0, [], true);
-    const observer = new ResizeObserver(render);
+    let frame;
+    const motion = animated && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const render = (now = 0) => {
+      drawHighway(canvas.current, game, motion ? (now / 1000) % 2.4 : 0, [], true);
+    };
+    const animate = now => { render(now); frame = requestAnimationFrame(animate); };
+    const observer = new ResizeObserver(() => render());
     observer.observe(canvas.current);
     render();
-    return () => observer.disconnect();
-  }, []);
+    if (motion) frame = requestAnimationFrame(animate);
+    return () => { observer.disconnect(); cancelAnimationFrame(frame); };
+  }, [animated]);
   return (
     <canvas
       ref={canvas}

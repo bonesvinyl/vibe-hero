@@ -43,3 +43,4 @@ leaderboard.sqlite*
 
 prepared-songs/
 .audio-tools/
+.vercel

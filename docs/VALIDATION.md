@@ -121,3 +121,10 @@ Validation: 64 tests pass, including URL parsing, queue resume/failure behavior 
 Star power lasts 16 seconds, including bonus cheering, echo/reverb and visuals; the 60-second activation interval is unchanged. Pause/resume adds a cancellable three-second countdown while media and scoring remain frozen. Named local score saving stays visible for completed, practice and failed attempts, including an immediate post-roll ad; practice/failed attempts remain excluded from the optional public-board prototype. Repeated-miss clips trigger after three consecutive misses independently of crowd cheer cooldown, with a 1.25-second cue interval.
 
 Validation: 67 Node tests, ESLint, both production builds and diff checks pass. New synthetic regressions cover resume timing/cancellation, post-roll score persistence/deduplication and misses during bonus cheering. Live browser/audio acceptance was not performed; the browser inspection tool remains policy-blocked.
+
+
+## Public launch page — September 8, 2026
+
+Homepage moved to a concert-poster landing page; the existing game remains at /play. It links the current extension 0.10.0 ZIP and a validated 49-chart indie starter pack, provides an expandable track list and explains bulk pack import into the extension's local library. Pricing is $9.99 one time, explicitly planned: checkout is not connected and the beta is free. No payment or entitlement system is represented as live. Self-service URL playlist processing and a standalone Mac binary remain unavailable.
+
+ESLint, 67 automated tests and production builds passed. Starter pack imported all 49 records into synthetic storage and the extension ZIP passed integrity/version checks. Browser visual inspection was attempted, but admin-policy verification denied access; no live visual acceptance is claimed. Vercel production and domain verification are recorded in the task delivery.
