@@ -40,3 +40,6 @@ lerna-debug.log*
 /dist-extension
 
 leaderboard.sqlite*
+
+prepared-songs/
+.audio-tools/

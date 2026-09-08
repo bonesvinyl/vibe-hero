@@ -103,3 +103,14 @@ Removed the synthetic oscillators used for arena/amp and miss-clang sounds. The 
 The actual music now also passes through a parallel 2.6-second convolution reverb during bonus, alongside the existing feedback echo. Generated impulse data describes room decay; no audible oscillator is mixed into the song. Muting the wet output leaves dry music connected. Native songs wait four seconds with the supplied intro cue before playing; local files have a four-second preroll, and the web embed has a pre-play countdown. Cancelling a native countdown does not start playback later. Fixed negative preroll time accidentally being interpreted as active star power.
 
 Validation: 61 tests, lint and app/extension production builds pass. Sound files decode successfully and their cut boundaries were checked by signal/silence analysis. The final in-game sound balance and browser playback are still not live-verified because the browser inspection tool remains blocked.
+
+
+## Bulk preparation 0.9
+
+The local queue worker accepts 1–200 YouTube song URLs, deduplicates exact recording IDs, retrieves available audio sequentially, and runs the existing full-mix analyzer offline. It does not need browser tabs or audible playback. It retains dense source notes for later Easy/Medium/Expert arrangements. This is still attack/energy analysis, not guitar isolation or hand-authored tablature.
+
+Run `npm run prepare:queue -- songs.txt prepared-songs/my-set`. The project-local .audio-tools environment contains a current yt-dlp; VIBE_DOWNLOADER overrides it. FFmpeg and Node are required. Run only one process per output directory. On Mac, prefix with `caffeinate -i` to prevent idle sleep while the process is active; lid closure, shutdown and loss of network still interrupt work. Unlike browser preparation, the browser does not need to remain open.
+
+The worker saves each chart and a queue-status checkpoint. Re-running the same list/output skips valid completed charts and retries incomplete/failed songs. A failed recording does not block later songs. No cookies or account access are used; unavailable/restricted recordings can still fail. Temporary media is removed after each attempt. The output vibe-hero-song-pack.json imports through My song library → Import a prepared setlist in extension 0.9. Existing charts for those IDs are replaced. Import validation precedes writes; storage errors report how many succeeded. No cloud upload or scheduled remote worker is introduced.
+
+Validation: 64 tests pass, including URL parsing, queue resume/failure behavior and bulk import. One earlier Judas Priest recording and all eight user-submitted September 8 URLs completed through the real retrieval/analysis pipeline. The eight-chart pack validates successfully. Browser library interaction remains unverified because browser inspection is blocked. The queue is complete; no worker or sleep-prevention process remains running.

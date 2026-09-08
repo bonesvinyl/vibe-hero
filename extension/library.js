@@ -1,3 +1,4 @@
+import { importPack } from './import-pack.js';
 /* global chrome */
 const status = document.querySelector('#status'), progress = document.querySelector('#progress'), cancel = document.querySelector('#cancel'), songs = document.querySelector('#songs');
 let loading = false;
@@ -39,3 +40,17 @@ cancel.onclick = async () => { try { const result = await chrome.runtime.sendMes
 chrome.storage.onChanged.addListener(render);
 render();
 setInterval(render, 5000);
+
+document.querySelector('#import-pack').onchange = async event => {
+  const input = event.target, file = input.files?.[0], message = document.querySelector('#import-status');
+  if (!file) return;
+  input.disabled = true;
+  try {
+    if (file.size > 30 * 1024 * 1024) throw new Error('Choose a song pack smaller than 30 MB.');
+    message.textContent = 'Importing prepared songs…';
+    const count = await importPack(JSON.parse(await file.text()), chrome.storage.local);
+    message.textContent = `${count} songs saved and ready to play. Open any song and click the extension Play button.`;
+    await render();
+  } catch (error) { message.textContent = `Could not finish import: ${error.message}`; }
+  finally { input.disabled = false; input.value = ''; }
+};
