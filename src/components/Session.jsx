@@ -462,15 +462,15 @@ export default function Session({ config, bindings, onExit, onResult }) {
               <span>notes hit</span>
             </div>
           </div>
-          <div className="energy-label">
+          <div className={`star-charge ${hud.energy >= 100 && !hud.power && !hud.recharge && status !== "failed" ? "power-ready" : ""}`}><div className="energy-label">
             <span>STAR POWER</span>
-            <span>{hud.power ? "ACTIVE / 2×" : hud.recharge ? `RECHARGE ${hud.recharge}s` : `${hud.energy}%`}</span>
+            <span>{hud.power ? "ACTIVE / 2×" : hud.recharge ? `RECHARGE ${hud.recharge}s` : hud.energy >= 100 ? "★ READY" : `${hud.energy}%`}</span>
           </div>
           <progress value={hud.energy} max="100" aria-label="Star power" />
           <p className="small">
             {bindingLabel(bindings[8])} to activate · Complete two glowing phrases · {hud.multiplier}×
             multiplier
-          </p>
+          </p></div>
           <p className="small">
             {config.mode === "strum"
               ? "Hold the frets, then strum."

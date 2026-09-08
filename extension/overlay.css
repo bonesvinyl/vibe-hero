@@ -23,3 +23,13 @@ header strong,header strong span,.setup h2,.streak-banner{font-family:NightmareH
 .rock-label{display:block;margin-top:12px;font-size:15px}.rock-meter{accent-color:#a4e675}.rock-status{display:block;font-size:14px}.danger .rock-meter{accent-color:#ff5b61}.danger .meters{border-color:#d65c60}.result-save{padding:18px 0;border-block:1px solid #778}.result-save label{display:block}.echo-status{font-size:14px;color:#b6c0b7}.powered .highway{filter:drop-shadow(0 0 15px #72f0ff)}
 
 .next-songs{border-top:1px solid #78875f;padding-top:16px;margin:16px 0}.next-songs button{display:block;width:100%;text-align:left;margin:8px 0}.next-songs h3{font-size:24px}
+
+/* Full charge is distinct from active power; motion changes glow, never layout. */
+.power-ready .meters{border-color:#c0ffff;box-shadow:0 0 12px #a2ffff,0 0 38px #26dcff88,inset 0 0 26px #39cfff33}
+.power-ready .charge-tubes i{background:linear-gradient(90deg,#39bddd,#eaffff 48%,#5ce7ff);border-color:#ecffff;box-shadow:0 0 12px #eaffff,0 0 26px #3ceaff;animation:vh-ready-glow 1.8s ease-in-out infinite alternate}
+.power-ready .charge-tubes i:nth-child(2),.power-ready .charge-tubes i:nth-child(4){animation-delay:-.45s}
+.power-ready .charge-tubes i:nth-child(3){animation-delay:-.9s}
+.power-ready .bonus{background:#bdffff;color:#092332;border-color:#fff;text-shadow:none;box-shadow:0 0 18px #3ceaff88;font-weight:700}
+.power-ready .energy-meter{accent-color:#baffff;filter:drop-shadow(0 0 7px #60eaff)}
+@keyframes vh-ready-glow{from{box-shadow:0 0 10px #cfffff,0 0 22px #3ceaff}to{box-shadow:0 0 18px #fff,0 0 38px #3ceaff}}
+@media(prefers-reduced-motion:reduce){.power-ready .charge-tubes i{animation:none}}

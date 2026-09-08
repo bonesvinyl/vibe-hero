@@ -263,8 +263,9 @@ function mount() {
           $('.streak-count').textContent = `${game.combo} note streak`;
           $('.energy-meter').value = powered ? Math.max(0, (game.powerUntil - time) / 16 * 100) : game.energy;
           $('.bonus').disabled = game.energy < 100 || powered || time < game.nextPowerAt;
-          $('.bonus').textContent = powered ? `BONUS · ${Math.ceil(game.powerUntil - time)}s` : time < game.nextPowerAt ? `Recharge · ${Math.ceil(game.nextPowerAt - time)}s` : game.energy >= 100 ? 'SPACE · Activate bonus' : `${Math.floor(game.energy)}% charged`;
+          $('.bonus').textContent = powered ? `BONUS · ${Math.ceil(game.powerUntil - time)}s` : time < game.nextPowerAt ? `Recharge · ${Math.ceil(game.nextPowerAt - time)}s` : game.energy >= 100 ? '★ STAR POWER READY · SPACE' : `${Math.floor(game.energy)}% charged`;
           stage.classList.toggle('powered', powered);
+          stage.classList.toggle('power-ready', started && !game.failed && game.energy >= 100 && !powered && time >= game.nextPowerAt);
           $('.points').textContent = game.score.toLocaleString(); $('.stats').textContent = `${game.combo} streak · ${game.accuracy}% hit`; $('.power').textContent = `Star power: ${Math.floor(game.energy)}% · ${game.multiplier}×`;
           $('.feedback').textContent = countdownEnd ? `${Math.max(1, Math.ceil((countdownEnd - now) / 1000))} · GET READY` : video.paused && started ? 'Paused · P / Enter to resume' : video.readyState < 3 ? 'Buffering…' : '';
           $('.streak-banner').textContent = time < game.milestoneUntil ? `${game.milestone} NOTE STREAK!` : '';

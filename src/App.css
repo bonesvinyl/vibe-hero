@@ -1340,3 +1340,5 @@ body,button,input,select,textarea,h1,h2,h3,p,span,label,a,small,strong,li{font-f
 .intro h1,.intro h1 *,h2,.wordmark,.wordmark span,.streak-banner{font-family:NightmareHero,serif!important}
 .intro h1{letter-spacing:0}.intro>p,.topbar nav,.drop-zone small{font-size:14px}
 .streak-banner{position:absolute;top:85px;left:25%;width:50%;text-align:center;font-size:28px;color:#fff0b6;text-shadow:0 2px 8px #000;pointer-events:none;z-index:5}
+
+.star-charge{border-radius:8px;padding:10px;margin:0 -10px}.star-charge.power-ready{outline:1px solid #baffff;background:#1b485333;box-shadow:0 0 20px #3ceaff66;animation:web-charge-glow 1.8s ease-in-out infinite alternate}.star-charge.power-ready .energy-label{color:#bdffff;text-shadow:0 0 12px #50dfff}.star-charge.power-ready progress{accent-color:#baffff;filter:drop-shadow(0 0 6px #60eaff)}@keyframes web-charge-glow{to{box-shadow:0 0 32px #3ceaff99}}@media(prefers-reduced-motion:reduce){.star-charge.power-ready{animation:none}}

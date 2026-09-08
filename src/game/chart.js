@@ -167,6 +167,8 @@ export class Game {
       if (!this.results[this.cursor]) {
         this.results[this.cursor] = "miss";
         this.misses++;
+        const phrase=this.notes[this.cursor].starPhrase;
+        if(phrase!==undefined)this.brokenPhrases.add(phrase);
         this.rock = Math.max(0, this.rock - (this.difficulty === "easy" ? 5 : 7));
         if (!this.rock) { this.failed = true; this.holds.clear(); this.powerUntil = -1; }
         this.combo = 0;
@@ -250,6 +252,9 @@ export class Game {
       if (time >= hold.until) this.holds.delete(index);
     }
     this.awardPhrases();
+  }
+  isStarNote(note) {
+    return note.starPhrase !== undefined && !this.brokenPhrases.has(note.starPhrase);
   }
   awardPhrases() {
     this.phrases.forEach((indices,id)=>{

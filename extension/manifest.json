@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Vibe Hero \u2014 Play on YouTube",
-  "version": "0.13.0",
+  "version": "0.13.1",
   "description": "Play Vibe Hero over the normal YouTube video player. Click to activate on the current watch page.",
   "permissions": [
     "activeTab",

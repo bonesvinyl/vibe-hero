@@ -27,3 +27,20 @@ test('one missed glowing note blocks a phrase and resets prevent farming',()=>{
  for(let i=0;i<=phrase.at(-1);i++){const n=game.notes[i];if(i===phrase[1])game.update(n.time+.3);else game.hit(n.lanes,n.time);}
  assert.equal(game.energy,0);game.reset(0);assert.equal(game.awardedPhrases.size,0);
 });
+
+test('a miss anywhere in a glowing phrase cancels its glow and award but preserves earlier charge',()=>{
+ for(let position=0;position<6;position++){
+  const game=new Game(notes().map(n=>({...n,duration:0})));
+  game.reset(0);const first=game.phrases[0],second=game.phrases[1];
+  for(let i=0;i<=second.at(-1);i++){
+   const n=game.notes[i];
+   if(i===second[position]){
+    game.update(n.time+.3);
+    assert.ok(game.brokenPhrases.has(1));
+    assert.ok(second.every(j=>!game.isStarNote(game.notes[j])));
+   }else game.hit(n.lanes,n.time);
+  }
+  assert.equal(game.energy,50);assert.ok(game.awardedPhrases.has(0));assert.ok(!game.awardedPhrases.has(1));
+  assert.ok(first.length>0);assert.ok(game.isStarNote(game.notes[game.phrases[2][0]]));
+ }
+});

@@ -104,7 +104,7 @@ export function drawHighway(
         line(project(lane + 0.5, tail), project(lane + 0.5, p), active ? "#b8faff" : COLORS[lane], Math.max(3, width * 0.013));
         line(project(lane + 0.5, tail), project(lane + 0.5, p), "#ffffff99", 2);
       }
-      gem(project(lane + 0.5, p), lane, active || time >= 0 && time < game.powerUntil, note.starPhrase !== undefined);
+      gem(project(lane + 0.5, p), lane, active || time >= 0 && time < game.powerUntil, game.isStarNote?.(note) ?? false);
     }
   }
   const sustaining = new Set([...game.holds?.keys() || []].flatMap(i => game.notes[i].lanes));
