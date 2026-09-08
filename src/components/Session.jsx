@@ -51,7 +51,7 @@ export default function Session({ config, bindings, onExit, onResult }) {
       lastVideoSync = 0,
       stopInput = () => {},
       metadataDeadline = 0,
-      viewingVideo = false, countdown = 0;
+      viewingVideo = false, countdown = 0, resuming = false;
     const offset = config.offset / 1000;
     const phase = (value) => {
       state = value;
@@ -60,6 +60,7 @@ export default function Session({ config, bindings, onExit, onResult }) {
     const snapshot = (time) => ({
       rock: game.rock,
       eligible: game.eligible,
+      outcome: game.failed ? "failed" : "completed",
       score: game.score,
       combo: game.combo,
       best: game.best,
@@ -76,7 +77,7 @@ export default function Session({ config, bindings, onExit, onResult }) {
       milestoneOpacity: Math.min(1, Math.max(0, (game.milestoneUntil - time) / 0.6)),
     });
     const pause = () => {
-      if (countdown) { countdown = 0; phase("ready"); }
+      if (countdown) { countdown = 0; phase(resuming ? "paused" : "ready"); }
       crowd.stop();
       if (!transport || !["playing", "buffering"].includes(state)) return;
       transport.pause();
@@ -102,7 +103,8 @@ export default function Session({ config, bindings, onExit, onResult }) {
       if (!transport || completed || disposed) return;
       try {
         crowd.unlock();
-        if (!config.buffer && state === "ready") { countdown = performance.now() + 4000; crowd.cue("intro.mp3", 2); phase("countdown"); return; }
+        if (state === "paused") { resuming = true; countdown = performance.now() + 3000; phase("countdown"); return; }
+        if (!config.buffer && state === "ready") { resuming = false; countdown = performance.now() + 4000; crowd.cue("intro.mp3", 2); phase("countdown"); return; }
         if (config.buffer && transport.getTime() <= -3.9) crowd.cue("intro.mp3", 2);
         await transport.play();
         if (!disposed) {
@@ -537,7 +539,7 @@ export default function Session({ config, bindings, onExit, onResult }) {
                   Back to studio ↗
                 </button>
               )}
-              {status === "finished" && hud.eligible && <div className="save-final-score"><label>Player name<input maxLength={24} value={playerName} onChange={e => setPlayerName(e.target.value)} /></label><button disabled={saved || !playerName.trim()} onClick={() => { writeStored("vh.player", playerName.trim()); if (onResult({ ...hud, username: playerName.trim() }) !== false) setSaved(true); else setError("Could not save score. Browser storage may be full."); }}>{saved ? "Score saved to history" : "Save final score"}</button></div>}
+              {["finished", "failed"].includes(status) && <div className="save-final-score"><label>Player name<input maxLength={24} value={playerName} onChange={e => setPlayerName(e.target.value)} /></label><button disabled={saved || !playerName.trim()} onClick={() => { writeStored("vh.player", playerName.trim()); if (onResult({ ...hud, username: playerName.trim() }) !== false) setSaved(true); else setError("Could not save score. Browser storage may be full."); }}>{saved ? "Score saved to history" : "Save final score"}</button></div>}
               {error && <p role="alert">{error}</p>}
               {error && config.videoId && (
                 <div>

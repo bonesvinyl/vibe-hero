@@ -23,13 +23,14 @@ test('crowd failure stops scoring and power until restart; hits recover health',
   game.reset(0); game.hit([0],0); assert.equal(game.failed,false); assert.equal(game.rock,72);
   assert.ok(game.flames[0]>0);
 });
-test('saved results persist per attempt, isolate charts and reject seeks or failed runs', async () => {
+test('saved results persist per attempt, isolate charts and label practice and failed runs', async () => {
   const game = new Game([{time:0,lanes:[0]}],true,'easy'); game.reset(0); game.hit([0],0);
   const settings={difficulty:'easy',chords:true,mode:'tap'};
   const record=await scoreRecord(game,settings,'WtuoFv4dcwM','Song','Player');
   const values={}; await saveScore(record,{set:async data=>Object.assign(values,data)});
   assert.equal(values[`vh.score.${record.id}`].score,100);
-  game.update(10); await assert.rejects(scoreRecord(game,settings,'WtuoFv4dcwM','Song','Player'));
+  game.update(10); assert.equal((await scoreRecord(game,settings,'WtuoFv4dcwM','Song','Player')).competitiveEligible,false);
+  game.failed=true; assert.equal((await scoreRecord(game,settings,'WtuoFv4dcwM','Song','Player')).outcome,'failed');
 });
 test('leaderboard isolates exact videos and settings and validates incoming scores', async () => {
   const server=leaderboard(':memory:'); await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
@@ -58,8 +59,8 @@ test('star power takes a song-minute to charge and cannot reactivate within 60 s
   game.reset(0);
   for(let t=0;t<=59.5;t+=.5) game.hit([0],t);
   assert.ok(game.energy<100); game.activate(59.5); assert.equal(game.powerUntil,-1);
-  game.hit([0],60); game.activate(60); assert.equal(game.powerUntil,68); assert.equal(game.nextPowerAt,120);
+  game.hit([0],60); game.activate(60); assert.equal(game.powerUntil,76); assert.equal(game.nextPowerAt,120);
   for(let t=60.5;t<=119.5;t+=.5) game.hit([0],t);
-  assert.ok(game.energy<100); game.activate(119.5); assert.equal(game.powerUntil,68);
-  game.hit([0],120); game.activate(120); assert.equal(game.powerUntil,128);
+  assert.ok(game.energy<100); game.activate(119.5); assert.equal(game.powerUntil,76);
+  game.hit([0],120); game.activate(120); assert.equal(game.powerUntil,136);
 });

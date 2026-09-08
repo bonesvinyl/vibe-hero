@@ -16,7 +16,7 @@ async function render() {
     for (const score of scores) {
       const card = document.createElement('article'), label = document.createElement('strong'), detail = document.createElement('p');
       label.textContent = `${score.username} · ${Number(score.score).toLocaleString()} points · ${score.title}`;
-      detail.textContent = `${score.difficulty} · ${score.chords ? 'chords on' : 'single notes'} · ${score.accuracy}% · best streak ${score.best} · ${new Date(score.date).toLocaleString()}`;
+      detail.textContent = `${score.outcome === "failed" ? "Failed attempt · " : score.competitiveEligible === false ? "Practice · " : ""}${score.difficulty} · ${score.chords ? 'chords on' : 'single notes'} · ${score.accuracy}% · best streak ${score.best} · ${new Date(score.date).toLocaleString()}`;
       const backup = document.createElement('button'); backup.textContent = 'Export score';
       backup.onclick = () => { const url = URL.createObjectURL(new Blob([JSON.stringify(score)], { type: 'application/json' })), a = document.createElement('a'); a.href = url; a.download = `vibe-hero-score-${score.id}.json`; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); };
       card.append(label, detail, backup); history.append(card);

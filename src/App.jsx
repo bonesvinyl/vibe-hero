@@ -259,6 +259,8 @@ export default function App() {
           {
             title: session.title,
             username: result.username,
+            outcome: result.outcome,
+            competitiveEligible: result.eligible && result.outcome !== "failed",
             videoId: session.videoId,
             best: result.best,
             chords: session.chords,

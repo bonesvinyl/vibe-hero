@@ -54,12 +54,12 @@ test('pause, mute, and teardown prevent an asynchronously loaded sound from star
 test('bonus cheer lasts the bonus window and is restarted for the remainder after pause', () => {
   const audio = new CrowdAudio(x=>x), calls=[];
   audio.play=(...args)=>calls.push(args); audio.arena=()=>{};
-  const game={hits:0,misses:0,combo:0,powerUntil:8,rock:70};
+  const game={hits:0,misses:0,combo:0,powerUntil:16,rock:70};
   audio.update(game,0); audio.update(game,0.5);
-  assert.equal(calls.length,1); assert.deepEqual(calls[0],['cheer',8,2.3,true]);
+  assert.equal(calls.length,1); assert.deepEqual(calls[0],['cheer',16,2.3,true]);
   audio.stop(); audio.update(game,1);
-  assert.equal(calls[1][1],7);
-  audio.update(game,8); assert.equal(audio.bonusPlaying,false);
+  assert.equal(calls[1][1],15);
+  audio.update(game,16); assert.equal(audio.bonusPlaying,false);
 });
 
 test('preroll never starts bonus sound or interrupts the intro cue', () => {
@@ -67,4 +67,19 @@ test('preroll never starts bonus sound or interrupts the intro cue', () => {
   audio.play=(...args)=>calls.push(args);
   audio.update({hits:0,misses:0,combo:0,powerUntil:-1},-4);
   assert.equal(calls.length,0);
+});
+
+
+test('third consecutive miss sounds even during bonus cheering, then hits reset the run', () => {
+  const audio=new CrowdAudio(x=>x), cues=[];
+  audio.play=()=>{}; audio.cue=(...args)=>cues.push(args);
+  const game={hits:0,misses:0,combo:0,powerUntil:16,rock:70};
+  audio.update(game,0); cues.length=0;
+  game.misses=1; audio.update(game,.5); game.misses=2; audio.update(game,1);
+  assert.equal(cues.length,0);
+  game.misses=3; audio.update(game,1.5); assert.match(cues[0][0],/^miss[1-6]\.mp3$/);
+  game.hits=1; audio.update(game,2); game.misses=4; audio.update(game,2.5);
+  game.misses=5; audio.update(game,3); assert.equal(cues.length,1);
+  game.misses=6; audio.update(game,3.5); assert.equal(cues.length,2);
+  game.misses=10; audio.update(game,20); assert.equal(cues.length,2);
 });

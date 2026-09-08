@@ -20,17 +20,17 @@ function fixture() {
   const host = { ...node(), isConnected: true, attachShadow: () => root, remove() { this.isConnected = false; } };
   const video = { duration: 30, currentTime: 0, readyState: 4, videoWidth: 1920, videoHeight: 1080, paused: false, seeking: false,
     pause() { this.paused = true; }, async play() { this.paused = false; } };
-  let frame, ad = false, drawnGame;
+  let frame, ad = false, drawnGame, now = 0; const stored = {};
   const document = { createElement: () => host, getElementById: () => null, documentElement: { append() {} },
     querySelector(selector) { return selector.includes('ad-showing') ? (ad ? {} : null) : selector.includes('video') ? video : null; },
     addEventListener(type, callback) { listeners.set(type, callback); }, removeEventListener(type) { listeners.delete(type); }, title: 'Fixture - YouTube' };
   const window = { addEventListener(type, callback) { listeners.set(type, callback); }, removeEventListener(type) { listeners.delete(type); } };
   const source = readFileSync(new URL('../extension/overlay.js', import.meta.url), 'utf8').replace(/^import .*;\n/gm, '');
-  vm.runInNewContext(source, { VideoBonusEcho, scoreRecord, saveScore, saveChart, loadChart, chrome: { runtime: { getURL: path => path }, storage: { local: { get: async () => ({}) } } }, CrowdAudio, Game, practiceChart, validateChart, KEYS, nativeSettings, parseHandoff, styles: '', document, window,
-    location: { href: 'https://www.youtube.com/watch?v=WtuoFv4dcwM', hash: '' }, URL, Event, performance: { now: () => 0 },
+  vm.runInNewContext(source, { VideoBonusEcho, scoreRecord, saveScore, saveChart, loadChart, chrome: { runtime: { getURL: path => path }, storage: { local: { get: async () => stored, set: async data => Object.assign(stored, data) } } }, CrowdAudio, Game, practiceChart, validateChart, KEYS, nativeSettings, parseHandoff, styles: '', document, window,
+    location: { href: 'https://www.youtube.com/watch?v=WtuoFv4dcwM', hash: '' }, URL, Event, performance: { now: () => now },
     requestAnimationFrame(callback) { frame = callback; return 1; }, cancelAnimationFrame() { frame = null; },
     innerWidth: 1200, innerHeight: 800, drawHighway(_canvas, game) { drawnGame = game; } });
-  return { video, nodes, host, listeners, tick: time => frame?.(time), setAd: value => { ad = value; }, game: () => drawnGame,
+  return { video, nodes, host, listeners, stored, tick: time => { now = time; frame?.(time); }, setAd: value => { ad = value; }, game: () => drawnGame,
     click(action) { root.click({ target: { closest: () => ({ dataset: { action } }) } }); },
     key(code) { listeners.get('keydown')?.({ code, composedPath: () => [{}], preventDefault() {}, stopImmediatePropagation() {} }); } };
 }
@@ -85,4 +85,29 @@ test('native countdown keeps music paused for four seconds and can be cancelled'
   const next=fixture(); next.tick(0); next.click('start'); await Promise.resolve();
   next.tick(3999); assert.equal(next.video.paused,true);
   next.tick(4000); assert.equal(next.video.paused,false); next.click('close');
+});
+
+
+test('resuming freezes music and scoring for three seconds and can be cancelled', async () => {
+  const f=fixture(); f.tick(0); f.click('start'); f.tick(4000); await Promise.resolve();
+  f.tick(4100); f.key('Enter'); f.key('Enter');
+  const misses=f.game().misses;
+  f.tick(7099); assert.equal(f.video.paused,true); assert.equal(f.game().misses,misses);
+  f.tick(7100); assert.equal(f.video.paused,false);
+  f.key('Enter'); f.key('Enter'); f.key('Enter');
+  f.tick(11000); assert.equal(f.video.paused,true); f.click('close');
+});
+
+test('post-roll transition retains a named score and saves it once to local history', async () => {
+  const f=fixture(); f.tick(0); f.click('start'); f.tick(4000); await Promise.resolve(); f.tick(4100);
+  f.game().lastTime=29.9; f.game().score=1234; f.game().eligible=false;
+  f.setAd(true); f.video.currentTime=0; f.video.duration=5; f.tick(4200);
+  assert.equal(f.nodes.get('.result-save').hidden,false);
+  f.nodes.get('#player-name').value='Rockstar'; f.click('save-score');
+  for(let i=0;i<50 && !Object.keys(f.stored).some(k=>k.startsWith('vh.score.'));i++) await new Promise(resolve=>setTimeout(resolve,5));
+  const records=Object.values(f.stored).filter(v=>typeof v==='object');
+  assert.equal(records.length,1); assert.equal(records[0].score,1234);
+  assert.equal(records[0].username,'Rockstar'); assert.equal(records[0].competitiveEligible,false);
+  assert.equal(records[0].title,'Fixture'); f.click('save-score'); await new Promise(resolve=>setTimeout(resolve,5));
+  assert.equal(Object.keys(f.stored).filter(k=>k.startsWith('vh.score.')).length,1); f.click('close');
 });

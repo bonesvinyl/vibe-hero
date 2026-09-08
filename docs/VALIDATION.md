@@ -114,3 +114,10 @@ Run `npm run prepare:queue -- songs.txt prepared-songs/my-set`. The project-loca
 The worker saves each chart and a queue-status checkpoint. Re-running the same list/output skips valid completed charts and retries incomplete/failed songs. A failed recording does not block later songs. No cookies or account access are used; unavailable/restricted recordings can still fail. Temporary media is removed after each attempt. The output vibe-hero-song-pack.json imports through My song library → Import a prepared setlist in extension 0.9. Existing charts for those IDs are replaced. Import validation precedes writes; storage errors report how many succeeded. No cloud upload or scheduled remote worker is introduced.
 
 Validation: 64 tests pass, including URL parsing, queue resume/failure behavior and bulk import. One earlier Judas Priest recording and all eight user-submitted September 8 URLs completed through the real retrieval/analysis pipeline. The eight-chart pack validates successfully. Browser library interaction remains unverified because browser inspection is blocked. The queue is complete; no worker or sleep-prevention process remains running.
+
+
+## Playback fixes 0.10
+
+Star power lasts 16 seconds, including bonus cheering, echo/reverb and visuals; the 60-second activation interval is unchanged. Pause/resume adds a cancellable three-second countdown while media and scoring remain frozen. Named local score saving stays visible for completed, practice and failed attempts, including an immediate post-roll ad; practice/failed attempts remain excluded from the optional public-board prototype. Repeated-miss clips trigger after three consecutive misses independently of crowd cheer cooldown, with a 1.25-second cue interval.
+
+Validation: 67 Node tests, ESLint, both production builds and diff checks pass. New synthetic regressions cover resume timing/cancellation, post-roll score persistence/deduplication and misses during bonus cheering. Live browser/audio acceptance was not performed; the browser inspection tool remains policy-blocked.

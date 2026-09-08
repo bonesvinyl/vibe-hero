@@ -1,10 +1,13 @@
 // Reactions use the song clock, so pauses and musical rests cannot count as misses.
 export class CrowdReactions {
-  reset() { this.time = null; this.hits = 0; this.misses = 0; this.bucket = 0; this.power = -1; this.lastSound = -Infinity; this.consecutiveMisses = 0; this.justBonus = false; }
+  reset() { this.time = null; this.hits = 0; this.misses = 0; this.bucket = 0; this.power = -1; this.lastSound = -Infinity; this.consecutiveMisses = 0; this.justBonus = false; this.missRun = 0; this.lastMissCue = -Infinity; this.justMissCue = false; }
   constructor() { this.reset(); }
   update(game, time) {
     if (this.time !== null && (time < this.time - 0.25 || time > this.time + 1 || game.hits < this.hits || game.misses < this.misses)) { this.reset(); this.time = time; this.hits = game.hits; this.misses = game.misses; this.bucket = Math.floor(game.combo / 10); this.power = game.powerUntil; return null; }
     const hit = game.hits > this.hits, missed = game.misses > this.misses;
+    this.justMissCue = false;
+    this.missRun = hit ? 0 : this.missRun + (game.misses - this.misses);
+    if (missed && !hit && this.missRun >= 3 && time >= 0 && time - this.lastMissCue >= 1.25) { this.justMissCue = true; this.lastMissCue = time; }
     const bucket = Math.floor(game.combo / 10);
     this.justBonus = game.powerUntil > this.power && game.powerUntil > time;
     const cheer = (hit && bucket > this.bucket) || this.justBonus;
@@ -38,8 +41,9 @@ export class CrowdAudio {
       this.play('cheer', remaining, 2.3, true); this.bonusPlaying = true; if (this.reactions.justBonus) this.cue(`star${1 + Math.floor(Math.random() * 5)}.mp3`, 1.6);
     } else if (remaining <= 0) {
       if (this.bonusPlaying) this.stop();
-      if (reaction) { this.play(reaction, reaction === 'boo' ? 4 : 3.5, reaction === 'boo' ? 1 + (100 - (game.rock ?? 70)) / 65 : 1); if (reaction === 'boo') this.missClang(); }
+      if (reaction) { this.play(reaction, reaction === 'boo' ? 4 : 3.5, reaction === 'boo' ? 1 + (100 - (game.rock ?? 70)) / 65 : 1); }
     }
+    if (this.reactions.justMissCue) this.missClang();
   }
   stop() { for (const voice of this.voices) { voice.source.stop(); voice.source.disconnect(); voice.gain.disconnect(); } this.voices = []; this.bonusPlaying = false; this.epoch++; if (this.source) { this.source.stop(); this.source.disconnect(); this.source = null; } this.gain?.disconnect(); this.gain = null; }
   load(file) {
@@ -60,7 +64,7 @@ export class CrowdAudio {
       source.start();
     } catch { /* Optional cue must never prevent gameplay. */ }
   }
-  missClang() { this.cue(`miss${1 + Math.floor(Math.random() * 6)}.mp3`, 1.5); }
+  missClang() { this.cue(`miss${1 + Math.floor(Math.random() * 6)}.mp3`, 2.4); }
   async play(type, duration = 3.5, boost = 1, loop = false) {
     if (!this.volume || this.closed || this.context?.state !== 'running') return;
     this.stop(); this.boost = boost; const epoch = this.epoch;

@@ -244,7 +244,7 @@ export class Game {
   activate(time) {
     if (!this.failed && this.energy >= 100 && time >= 0 && time >= this.powerUntil && time >= this.nextPowerAt) {
       this.energy = 0;
-      this.powerUntil = time + 8;
+      this.powerUntil = time + 16;
       this.nextPowerAt = time + 60;
     }
   }
