@@ -1,4 +1,4 @@
-export const RULESET = 'encore-0.10';
+export const RULESET = 'encore-0.13';
 export async function scoreRecord(game, settings, videoId, title, username) {
   username = String(username || '').trim().slice(0, 24);
   if (!username) throw new Error('Enter a player name first.');
@@ -8,7 +8,7 @@ export async function scoreRecord(game, settings, videoId, title, username) {
   return { id: crypto.randomUUID(), ruleset: RULESET, videoId, title: String(title).slice(0, 200), username,
     outcome: game.failed ? 'failed' : 'completed', competitiveEligible: !game.failed && game.eligible,
     score: game.score, accuracy: game.accuracy, best: game.best, notes: game.notes.length,
-    difficulty: settings.difficulty, chords: settings.chords !== false, mode: settings.mode,
+    difficulty: settings.difficulty, triples: settings.triples !== false, chords: settings.chords !== false, mode: settings.mode,
     chart, date: new Date().toISOString() };
 }
 export async function saveScore(record, storage) {

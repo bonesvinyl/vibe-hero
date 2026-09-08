@@ -73,19 +73,21 @@ export function drawHighway(
     line(project(0, p), project(5, p), "#c9c8ba18");
   }
   line(project(0, 1), project(5, 1), "#eee8d5", 2);
-  const gem = (point, lane, active = false) => {
+  const gem = (point, lane, active = false, star = false) => {
     const r = width * 0.047 * point.depth;
     const ellipse = (y, rx, ry, color) => {
       ctx.beginPath(); ctx.ellipse(point.x, y, rx, ry, 0, 0, Math.PI * 2);
       ctx.fillStyle = color; ctx.fill();
     };
     ctx.shadowColor = active ? "#90f5ff" : COLORS[lane];
-    ctx.shadowBlur = active ? 24 : preview ? 6 : 10;
+    ctx.shadowBlur = active ? 24 : star ? 22 : preview ? 6 : 10;
+    if(star)ctx.shadowColor="#fff2a8";
     ellipse(point.y + r * 0.22, r * 1.12, r * 0.52, "#090d13");
     ellipse(point.y + r * 0.12, r * 1.04, r * 0.5, "#c2cad3");
     const shine = ctx.createLinearGradient(0, point.y - r * 0.6, 0, point.y + r * 0.35);
     shine.addColorStop(0, "#ffffff"); shine.addColorStop(0.28, active ? "#65eaff" : COLORS[lane]); shine.addColorStop(1, "#101620");
     ellipse(point.y - r * 0.12, r * 0.88, r * 0.55, shine);
+    if(star){ctx.strokeStyle='#fff2a8';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(point.x,point.y,r*1.2,r*.68,0,0,Math.PI*2);ctx.stroke();}
     ctx.shadowBlur = 0;
     ellipse(point.y - r * 0.38, r * 0.45, r * 0.16, "#fff4de");
   };
@@ -102,7 +104,7 @@ export function drawHighway(
         line(project(lane + 0.5, tail), project(lane + 0.5, p), active ? "#b8faff" : COLORS[lane], Math.max(3, width * 0.013));
         line(project(lane + 0.5, tail), project(lane + 0.5, p), "#ffffff99", 2);
       }
-      gem(project(lane + 0.5, p), lane, active || time >= 0 && time < game.powerUntil);
+      gem(project(lane + 0.5, p), lane, active || time >= 0 && time < game.powerUntil, note.starPhrase !== undefined);
     }
   }
   const sustaining = new Set([...game.holds?.keys() || []].flatMap(i => game.notes[i].lanes));

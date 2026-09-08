@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { nativeSettings, youtubeWatchHandoff, parseHandoff } from '../src/game/handoff.js';
 
 test('YouTube recovery preserves tempo and calibration without transferring local media or credentials', () => {
-  const settings = { chords: true, bpm: 155, firstBeat: 3.15, offset: -75, difficulty: 'expert', mode: 'strum' };
+  const settings = { triples: false, chords: true, bpm: 155, firstBeat: 3.15, offset: -75, difficulty: 'expert', mode: 'strum' };
   const url = new URL(youtubeWatchHandoff('WtuoFv4dcwM', { ...settings, apiKey: 'secret', buffer: 'private audio', title: 'private title' }));
   assert.equal(url.origin, 'https://www.youtube.com');
   assert.equal(url.searchParams.get('v'), 'WtuoFv4dcwM');

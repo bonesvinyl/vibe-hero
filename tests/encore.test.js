@@ -54,13 +54,12 @@ test('initial audio preroll remains score eligible while a later seek does not',
   game.update(-1); assert.equal(game.eligible,false);
 });
 
-test('star power takes a song-minute to charge and cannot reactivate within 60 seconds', () => {
-  const game=new Game(Array.from({length:400},(_,i)=>({time:i*.5,lanes:[0]})));
-  game.reset(0);
-  for(let t=0;t<=59.5;t+=.5) game.hit([0],t);
-  assert.ok(game.energy<100); game.activate(59.5); assert.equal(game.powerUntil,-1);
-  game.hit([0],60); game.activate(60); assert.equal(game.powerUntil,76); assert.equal(game.nextPowerAt,120);
-  for(let t=60.5;t<=119.5;t+=.5) game.hit([0],t);
-  assert.ok(game.energy<100); game.activate(119.5); assert.equal(game.powerUntil,76);
-  game.hit([0],120); game.activate(120); assert.equal(game.powerUntil,136);
+test('only complete glowing phrases charge the meter, yielding four activations on a clean song', () => {
+ const game=new Game(Array.from({length:480},(_,i)=>({time:i*.5,lanes:[0]})));
+ game.reset(0);let activations=0;
+ for(const note of game.notes){const prior=game.energy;game.hit(note.lanes,note.time);
+  if(note.starPhrase===undefined)assert.equal(game.energy,prior);
+  if(game.energy===100&&note.time>=game.powerUntil){game.activate(note.time);activations++;}
+ }
+ assert.equal(game.phrases.length,8);assert.equal(activations,4);
 });

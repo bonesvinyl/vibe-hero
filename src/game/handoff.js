@@ -1,6 +1,6 @@
 export function nativeSettings(value = {}) {
   const number = (name, fallback, min, max) => Number.isFinite(value?.[name]) && value[name] >= min && value[name] <= max ? value[name] : fallback;
-  return { chords: value?.chords !== false, bpm: number('bpm', 120, 40, 240), firstBeat: number('firstBeat', 2.5, 0, 120), offset: number('offset', 0, -500, 500), difficulty: ['easy', 'medium', 'expert'].includes(value?.difficulty) ? value.difficulty : 'medium', mode: value?.mode === 'strum' ? 'strum' : 'tap' };
+  return { triples: value?.triples !== false, chords: value?.chords !== false, bpm: number('bpm', 120, 40, 240), firstBeat: number('firstBeat', 2.5, 0, 120), offset: number('offset', 0, -500, 500), difficulty: ['easy', 'medium', 'hard', 'expert'].includes(value?.difficulty) ? value.difficulty : 'medium', mode: value?.mode === 'strum' ? 'strum' : 'tap' };
 }
 export function youtubeWatchHandoff(videoId, settings) {
   if (!/^[\w-]{11}$/.test(videoId)) return 'https://www.youtube.com/';

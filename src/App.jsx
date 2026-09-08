@@ -25,6 +25,7 @@ export default function App() {
   const [difficulty, setDifficulty] = useState("medium"),
     [mode, setMode] = useState("tap"),
     [chords, setChords] = useState(true),
+    [triples, setTriples] = useState(true),
     [bpm, setBpm] = useState(120),
     [firstBeat, setFirstBeat] = useState(2.5);
   const [offset, setOffset] = useState(() => {
@@ -219,6 +220,7 @@ export default function App() {
       difficulty,
       mode,
       chords,
+      triples,
       bpm,
       firstBeat,
       offset,
@@ -264,6 +266,7 @@ export default function App() {
             videoId: session.videoId,
             best: result.best,
             chords: session.chords,
+            triples: session.triples,
             score: result.score,
             accuracy: result.accuracy,
             difficulty: session.difficulty,
@@ -568,6 +571,7 @@ export default function App() {
                 <span className="section-number">02</span> Find your level
               </h2>
             </div>
+            {['hard','expert'].includes(difficulty) && <label>Three-note chords <select value={String(triples)} disabled={!chords} onChange={event=>setTriples(event.target.value==='true')}><option value="true">On</option><option value="false">Off · two notes max</option></select></label>}
             <label>Bar chords <select value={String(chords)} onChange={event => setChords(event.target.value === "true")}><option value="true">On · chord accents</option><option value="false">Off · single notes only</option></select></label>
             <div className="difficulty-options">
               {[
@@ -584,10 +588,16 @@ export default function App() {
                   bars: 2,
                 },
                 {
+                  id: "hard",
+                  title: "Hard",
+                  sub: "The original Expert",
+                  bars: 3,
+                },
+                {
                   id: "expert",
                   title: "Expert",
-                  sub: "Let it rip",
-                  bars: 3,
+                  sub: "Faster. Tighter. Louder.",
+                  bars: 4,
                 },
               ].map((item) => (
                 <button
@@ -597,7 +607,7 @@ export default function App() {
                   onClick={() => changeDifficulty(item.id)}
                 >
                   <span className="level-bars">
-                    {[0, 1, 2].map((i) => (
+                    {[0, 1, 2, 3].map((i) => (
                       <i
                         key={i}
                         className={i < item.bars ? "filled" : ""}

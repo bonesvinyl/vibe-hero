@@ -6,7 +6,7 @@ export function chartFromFrames(frames, difficulty = 'medium') {
   let maxFlux = 0, maxEnergy = 0;
   for (const f of frames) { maxFlux = Math.max(maxFlux, f.flux); maxEnergy = Math.max(maxEnergy, f.energy); }
   if (maxFlux < 0.001) return { notes: [], bpm: null, confidence: 0 };
-  const peaks = [], spacing = { easy: 0.36, medium: 0.2, expert: 0.12 }[difficulty] || 0.2;
+  const peaks = [], spacing = { easy: 0.36, medium: 0.2, hard: 0.12, expert: 0.09 }[difficulty] || 0.2;
   for (let i = 2; i < frames.length - 2; i++) {
     const f = frames[i], near = frames.slice(Math.max(0, i - 15), i + 16);
     const threshold = Math.max(maxFlux * 0.035, near.reduce((sum, x) => sum + x.flux, 0) / near.length * 1.45);
@@ -20,7 +20,7 @@ export function chartFromFrames(frames, difficulty = 'medium') {
   const notes = peaks.map((p, i) => {
     const lane = boundaries.filter(b => p.tone > b).length;
     // Strong attacks become playable chord accents, not inferred guitar fingerings.
-    const lanes = difficulty === 'expert' && p.flux > maxFlux * 0.8 ? [0, 2, 4] : difficulty !== 'easy' && p.flux > maxFlux * 0.55 ? [lane, (lane + 2) % 5].sort() : [lane];
+    const lanes = ['hard','expert'].includes(difficulty) && p.flux > maxFlux * 0.8 ? [0, 2, 4] : difficulty !== 'easy' && p.flux > maxFlux * 0.55 ? [lane, (lane + 2) % 5].sort() : [lane];
     const limit = Math.min(peaks[i + 1]?.time - 0.07 || Infinity, p.time + 6);
     let end = p.time;
     for (let j = p.index + 1; j < frames.length && frames[j].time < limit; j++) {

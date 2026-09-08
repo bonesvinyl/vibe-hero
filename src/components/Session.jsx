@@ -156,7 +156,7 @@ export default function Session({ config, bindings, onExit, onResult }) {
                     config.firstBeat,
                     config.difficulty,
                   ),
-              config.chords !== false, config.difficulty,
+              config.chords !== false, config.difficulty, config.triples !== false,
             );
             if (state === "buffering" && transport.playing) phase("playing");
           } catch (cause) {
@@ -224,7 +224,7 @@ export default function Session({ config, bindings, onExit, onResult }) {
       try {
         if (config.buffer) {
           transport = new AudioTransport(config.buffer);
-          game = new Game(config.notes, config.chords !== false, config.difficulty);
+          game = new Game(config.notes, config.chords !== false, config.difficulty, config.triples !== false);
           phase("ready");
           if (config.videoId) {
             const node = document.createElement("div");
@@ -468,7 +468,7 @@ export default function Session({ config, bindings, onExit, onResult }) {
           </div>
           <progress value={hud.energy} max="100" aria-label="Star power" />
           <p className="small">
-            {bindingLabel(bindings[8])} to activate at 100% · {hud.multiplier}×
+            {bindingLabel(bindings[8])} to activate · Complete two glowing phrases · {hud.multiplier}×
             multiplier
           </p>
           <p className="small">

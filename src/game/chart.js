@@ -42,7 +42,7 @@ export function practiceChart(
     throw new Error("Use 40–240 BPM and a track under 20 minutes.");
   const step =
     (60 / bpm) *
-    (difficulty === "easy" ? 2 : difficulty === "expert" ? 0.5 : 1);
+    (difficulty === "easy" ? 2 : difficulty === "expert" ? 0.25 : difficulty === "hard" ? 0.5 : 1);
   const pattern = [0, 1, 2, 1, 3, 2, 4, 2, 0, 2, 3, 4, 3, 1, 2, 1];
   const notes = [];
   for (
@@ -52,7 +52,7 @@ export function practiceChart(
   )
     {
       const lane = pattern[i % pattern.length];
-      const lanes = difficulty === "expert" && i % 8 === 4 ? [0, 2, 4] : difficulty !== "easy" && i % 4 === 3 ? [lane, (lane + 2) % 5].sort() : [lane];
+      const lanes = ["hard", "expert"].includes(difficulty) && i % 8 === 4 ? [0, 2, 4] : difficulty !== "easy" && i % 4 === 3 ? [lane, (lane + 2) % 5].sort() : [lane];
       notes.push({ time: +t.toFixed(4), lanes, ...(i % 8 === 6 ? { duration: Math.min(step * 0.7, duration - t - 0.15) } : {}) });
     }
   return notes;
@@ -96,15 +96,21 @@ export function validateChart(value, duration) {
 }
 
 // Apply accessibility/difficulty to every source, including older saved charts.
-export function arrangeNotes(notes, difficulty, chords = true) {
-  const spacing = { easy: 0.8, medium: 0.42, expert: 0 }[difficulty] ?? 0;
+export function arrangeNotes(notes, difficulty, chords = true, triples = true) {
+  const spacing = { easy: 0.8, medium: 0.42, hard: 0, expert: 0 }[difficulty] ?? 0;
   const arranged = [];
   for (const note of notes) {
     if (arranged.length && note.time - arranged.at(-1).time < spacing) continue;
     let lanes = [...new Set(note.lanes.map(lane => difficulty === 'easy' ? Math.min(3, lane) : lane))];
     if (!chords || difficulty === 'easy') lanes = [lanes[Math.floor(lanes.length / 2)]];
     else if (difficulty === 'medium') lanes = lanes.slice(0, 2);
-    arranged.push({ ...note, lanes });
+    else if (difficulty === 'expert' && lanes.length===1 && arranged.length%4===3) lanes=[lanes[0],(lanes[0]+2)%5].sort();
+    if(chords && triples && ['hard','expert'].includes(difficulty) && lanes.length===2 && arranged.length%(difficulty==='expert'?3:8)===0){
+      lanes.push([0,1,2,3,4].find(l=>!lanes.includes(l)));lanes.sort();
+    }
+    if(['hard','expert'].includes(difficulty))lanes=lanes.slice(0,triples?3:2);
+    const arrangedNote={...note,lanes};delete arrangedNote.starPhrase;
+    arranged.push(arrangedNote);
   }
   // Remapping orange to blue must not create overlapping held frets.
   const nextTimes = Array(5).fill(Infinity);
@@ -117,11 +123,12 @@ export function arrangeNotes(notes, difficulty, chords = true) {
 }
 
 export class Game {
-  constructor(notes, chords = true, difficulty = null) {
+  constructor(notes, chords = true, difficulty = null, triples = true) {
     this.difficulty = difficulty;
-    this.approach = { easy: 4.5, medium: 3.4, expert: 2.4 }[difficulty] || APPROACH;
-    this.window = difficulty === "easy" ? 0.22 : difficulty === "medium" ? 0.18 : WINDOW;
-    this.notes = arrangeNotes(notes, difficulty, chords);
+    this.approach = { easy: 4.5, medium: 3.4, hard: 2.4, expert: 1.9 }[difficulty] || APPROACH;
+    this.window = difficulty === "easy" ? 0.22 : difficulty === "medium" ? 0.18 : difficulty === "expert" ? 0.11 : WINDOW;
+    this.notes = arrangeNotes(notes, difficulty, chords, triples);
+    this.phrases = starPhrases(this.notes);
     this.reset();
   }
   reset(time = -2) {
@@ -144,7 +151,8 @@ export class Game {
     this.rock = 70; this.failed = false; this.eligible = time <= 0;
     this.energy = 0;
     this.powerUntil = -1;
-    this.nextPowerAt = 60;
+    this.nextPowerAt = 0;
+    this.awardedPhrases = new Set(); this.brokenPhrases = new Set();
   }
   update(time) {
     if (this.failed) return;
@@ -218,7 +226,7 @@ export class Game {
     this.rock = Math.min(100, this.rock + 2);
     this.score +=
       (perfect ? 100 : 60) * this.multiplier * (time < this.powerUntil ? 2 : 1);
-    this.energy = Math.min(100, this.energy + 4, Math.max(0, (time - (this.nextPowerAt - 60)) / 60 * 100));
+    this.awardPhrases();
     this.feedback = perfect ? "Perfect" : "Good";
     this.feedbackUntil = time + 0.5;
     return true;
@@ -229,6 +237,7 @@ export class Game {
     for (const [index, hold] of this.holds) {
       if (time < hold.until && !this.notes[index].lanes.every(lane => held[lane])) {
         this.holds.delete(index);
+        this.brokenPhrases.add(this.notes[index].starPhrase);
         this.combo = 0;
         this.feedback = "Hold released";
         this.feedbackUntil = time + 0.5;
@@ -240,12 +249,21 @@ export class Game {
       hold.last += ticks * 0.1;
       if (time >= hold.until) this.holds.delete(index);
     }
+    this.awardPhrases();
+  }
+  awardPhrases() {
+    this.phrases.forEach((indices,id)=>{
+      if(this.awardedPhrases.has(id)||this.brokenPhrases.has(id))return;
+      if(indices.every(i=>['perfect','good'].includes(this.results[i])&&!this.holds.has(i))){
+        this.energy=Math.min(100,this.energy+50);this.awardedPhrases.add(id);
+      }
+    });
   }
   activate(time) {
     if (!this.failed && this.energy >= 100 && time >= 0 && time >= this.powerUntil && time >= this.nextPowerAt) {
       this.energy = 0;
       this.powerUntil = time + 16;
-      this.nextPowerAt = time + 60;
+      this.nextPowerAt = this.powerUntil;
     }
   }
   get multiplier() {
@@ -256,4 +274,23 @@ export class Game {
       ? Math.round((100 * this.hits) / (this.hits + this.misses))
       : 0;
   }
+}
+
+// Eight spaced phrases give four charges on a clean full-length performance.
+// Mark existing attacks only: never fill silence with artificial notes.
+export function starPhrases(notes){
+  const phrases=[];if(notes.length<16)return phrases;
+  const end=notes.at(-1).time, count=Math.min(8,Math.floor(notes.length/8));
+  let after=-1;
+  for(let p=0;p<count;p++){
+    const target=end*(0.06+0.84*p/(count-1));
+    const start=notes.findIndex((n,i)=>i>after&&n.time>=target);
+    if(start<0)break;
+    const indices=[];
+    for(let i=start;i<notes.length&&indices.length<6&&notes[i].time-notes[start].time<=8;i++)indices.push(i);
+    if(indices.length<2)continue;
+    const id=phrases.length;for(const i of indices)notes[i].starPhrase=id;
+    phrases.push(indices);after=indices.at(-1);
+  }
+  return phrases;
 }
