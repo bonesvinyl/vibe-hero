@@ -171,3 +171,8 @@ Bar chords can be switched off in setup for single-fret play, retaining note tim
 Native gameplay reserves Space for star power, including when a button has focus; P or Enter pauses. The web app retains its configurable bindings (Enter pauses by default). Bonus activation immediately cheers and restores the original layered synthetic arena ambience; it does not apply reverb to YouTube's audio. Five consecutive misses trigger boos subject to the reaction cooldown. Successful hits reset that miss run; rests and seeks cannot manufacture a boo. Crowd volume also controls the bonus ambience.
 
 Reload extension 0.6.0 and refresh the YouTube page. Automated keyboard, chart, milestone and reaction checks pass. Browser policy prevents live visual/audio verification of this update; no live acceptance claim is made.
+
+
+## Typography 0.6.1
+
+Nightmare Hero is limited to display headings, branding, and streak celebrations. Barlow Condensed Medium/SemiBold handles smaller copy, forms, controls, counters, and fret labels across the app and extension. Fonts and the Barlow OFL license are bundled locally. Small native instructions and popup copy have larger type. Lint, both builds, and 48 existing tests pass; live visual verification remains blocked by browser policy.

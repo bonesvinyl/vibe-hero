@@ -2,3 +2,7 @@ Nightmare Hero by _n3o_
 Downloaded from https://www.dafont.com/nightmare-hero.font
 Listed as 100% Free. Author note: Inspired by the Guitar Hero typeface; all rights reserved to respective authors.
 Archive contained only Nightmare_Hero_Normal.ttf.
+
+Barlow Condensed by Jeremy Tribby / The Barlow Project Authors.
+Medium and SemiBold from https://github.com/google/fonts/tree/main/ofl/barlowcondensed
+SIL Open Font License 1.1 included as Barlow-OFL.txt.

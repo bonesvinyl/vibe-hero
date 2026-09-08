@@ -1335,5 +1335,8 @@
 }
 
 @font-face{font-family:NightmareHero;src:url('/fonts/Nightmare_Hero_Normal.ttf') format('truetype');font-display:swap}
-body,button,input,select,textarea,h1,h2,h3,p,span,label,a,small,strong{font-family:NightmareHero,system-ui!important}
+@font-face{font-family:BarlowCondensed;src:url("/fonts/BarlowCondensed-Medium.ttf") format("truetype");font-weight:400 500;font-display:swap}@font-face{font-family:BarlowCondensed;src:url("/fonts/BarlowCondensed-SemiBold.ttf") format("truetype");font-weight:600 900;font-display:swap}
+body,button,input,select,textarea,h1,h2,h3,p,span,label,a,small,strong,li{font-family:BarlowCondensed,"Arial Narrow",sans-serif!important}
+.intro h1,.intro h1 *,h2,.wordmark,.wordmark span,.streak-banner{font-family:NightmareHero,serif!important}
+.intro h1{letter-spacing:0}.intro>p,.topbar nav,.drop-zone small{font-size:14px}
 .streak-banner{position:absolute;top:85px;left:25%;width:50%;text-align:center;font-size:28px;color:#fff0b6;text-shadow:0 2px 8px #000;pointer-events:none;z-index:5}

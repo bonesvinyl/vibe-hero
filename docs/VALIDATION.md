@@ -72,3 +72,8 @@ Native gameplay reserves Space for star power, including when a button has focus
 Reload extension 0.6.0 and refresh the YouTube page. Automated keyboard, chart, milestone and reaction checks pass. Browser policy prevents live visual/audio verification of this update; no live acceptance claim is made.
 
 Validation: 48 Node tests pass; production app and extension builds and lint pass.
+
+
+## Typography 0.6.1
+
+Nightmare Hero is limited to display headings, branding, and streak celebrations. Barlow Condensed Medium/SemiBold handles smaller copy, forms, controls, counters, and fret labels across the app and extension. Fonts and the Barlow OFL license are bundled locally. Small native instructions and popup copy have larger type. Lint, both builds, and 48 existing tests pass; live visual verification remains blocked by browser policy.
