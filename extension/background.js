@@ -7,6 +7,16 @@ const player = async (tabId, videoId, action = 'state') => {
 };
 chrome.runtime.onMessage.addListener((message, sender, reply) => {
   if (sender.id !== chrome.runtime.id || message.target !== 'background') return;
+  if(message.type==='next-song' && sender.tab && /^https:\/\/(www\.)?youtube\.com\//.test(sender.url||'')){
+    (async()=>{
+      if(!/^[\w-]{11}$/.test(message.videoId||''))throw Error('Invalid song.');
+      const key='vh.chart.'+message.videoId;
+      if(!(await chrome.storage.local.get(key))[key])throw Error('Prepare this song first.');
+      const url=new URL(sender.url);url.pathname='/watch';url.search='?v='+message.videoId;url.hash='';
+      await chrome.storage.session.set({['vh.next.'+sender.tab.id]:{videoId:message.videoId,settings:message.settings,setId:message.setId,at:Date.now()}});
+      await chrome.tabs.update(sender.tab.id,{url:url.href});return {ok:true};
+    })().then(reply).catch(error=>reply({error:error.message}));return true;
+  }
   const internal = sender.url?.startsWith(chrome.runtime.getURL('')) || (!sender.tab && !sender.url);
   if (!internal) { reply({ error: 'Use the Vibe Hero extension to start preparation.' }); return; }
   (async () => {
@@ -38,3 +48,17 @@ chrome.runtime.onMessage.addListener((message, sender, reply) => {
   })().then(result => reply(result)).catch(error => reply({ error: error.message }));
   return true;
 });
+
+chrome.tabs.onUpdated.addListener((tabId,change)=>{
+  if(change.status!=='complete')return;
+  (async()=>{
+    const key='vh.next.'+tabId,pending=(await chrome.storage.session.get(key))[key];
+    if(!pending)return;
+    const tab=await chrome.tabs.get(tabId),url=new URL(tab.url||'');
+    if(!['www.youtube.com','youtube.com'].includes(url.hostname)||url.protocol!=='https:'||Date.now()-pending.at>120000||url.searchParams.get('v')!==pending.videoId){await chrome.storage.session.remove(key);return;}
+    await chrome.storage.session.remove(key);
+    await chrome.scripting.executeScript({target:{tabId},func:value=>{window.__vibeHeroContinuation=value;},args:[pending]});
+    await chrome.scripting.executeScript({target:{tabId},files:['overlay.js']});
+  })().catch(()=>{});
+});
+chrome.tabs.onRemoved.addListener(tabId=>chrome.storage.session.remove('vh.next.'+tabId));

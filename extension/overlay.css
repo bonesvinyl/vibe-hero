@@ -21,3 +21,5 @@ header strong,header strong span,.setup h2,.streak-banner{font-family:NightmareH
 .status,.chart-status,.save-status,.hint,.score .hint,.bonus-help,.listen-help,.fields label,footer,.meters>span{font-size:14px;line-height:1.5}button,.file-label,input:not([type=file]),select{font-size:15px}.meters h3{font-size:20px}.score .points,.multiplier{font-variant-numeric:tabular-nums}
 
 .rock-label{display:block;margin-top:12px;font-size:15px}.rock-meter{accent-color:#a4e675}.rock-status{display:block;font-size:14px}.danger .rock-meter{accent-color:#ff5b61}.danger .meters{border-color:#d65c60}.result-save{padding:18px 0;border-block:1px solid #778}.result-save label{display:block}.echo-status{font-size:14px;color:#b6c0b7}.powered .highway{filter:drop-shadow(0 0 15px #72f0ff)}
+
+.next-songs{border-top:1px solid #78875f;padding-top:16px;margin:16px 0}.next-songs button{display:block;width:100%;text-align:left;margin:8px 0}.next-songs h3{font-size:24px}

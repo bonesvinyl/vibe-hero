@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {libraryView,filteredSongs,cleanTitle,addSongs,moveSong,preparationStamp} from '../extension/library-model.js';
+import {libraryView,filteredSongs,cleanTitle,addSongs,moveSong,preparationStamp,deleteCollection} from '../extension/library-model.js';
 import {saveChart} from '../extension/chart-store.js';
 const song=(id,title)=>({version:1,youtubeId:id,title,notes:[{time:1,lanes:[0]}],duration:30,settings:{},savedAt:'2026-09-08'});
 test('existing charts recognize known packs and manual songs without modifying storage',()=>{
@@ -34,4 +34,21 @@ test('title cleanup preserves recording version qualifiers',()=>{
 test('dismissal identifies only the finished notice, not a later preparation',()=>{
  const job={videoId:'abcdefghijk',status:'ready',updatedAt:10};
  assert.notEqual(preparationStamp(job),preparationStamp({...job,status:'preparing',updatedAt:11}));
+});
+
+test('deleting built-in pack keeps songs and never resurrects the collection',()=>{
+ const values={'vh.chart.ltYq-jalYm0':song('ltYq-jalYm0','Feist')};
+ const id=libraryView(values).sets[0].id;
+ const change=deleteCollection(values,id);
+ Object.assign(values,change.updates);
+ assert.equal(change.remove.length,0);assert.equal(libraryView(values).sets.length,0);
+ assert.equal(libraryView(values).songs.length,1);
+});
+test('full deletion removes exact song records and shared memberships, preserving unrelated data',()=>{
+ const values={'vh.setlist.mix':{id:'mix',name:'Mix',songIds:['abcdefghijk']},'vh.setlist.other':{id:'other',songIds:['abcdefghijk','zyxwvutsrqp']},'vh.chart.abcdefghijk':song('abcdefghijk','A'),'vh.song.abcdefghijk':{title:'A'},'vh.score.a':{videoId:'abcdefghijk'},'vh.score.b':{videoId:'zyxwvutsrqp'}};
+ const change=deleteCollection(values,'mix',true);Object.assign(values,change.updates);change.remove.forEach(k=>delete values[k]);
+ assert.equal(libraryView(values).sets.some(s=>s.id==='mix'),false);
+ assert.deepEqual(values['vh.setlist.other'].songIds,['zyxwvutsrqp']);
+ assert.equal(libraryView(values).songs.some(s=>s.id==='abcdefghijk'),false);
+ assert.ok(values['vh.score.b']);
 });

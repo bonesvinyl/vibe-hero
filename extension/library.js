@@ -1,6 +1,6 @@
 /* global chrome */
 import { importPack, validatePack } from './import-pack.js';
-import { META, SET, libraryView, filteredSongs, addSongs, moveSong, preparationStamp } from './library-model.js';
+import { META, SET, libraryView, filteredSongs, addSongs, moveSong, preparationStamp, deleteCollection } from './library-model.js';
 const $=id=>document.getElementById(id),storage=chrome.storage.local;
 let values={},model={songs:[],sets:[]},collection='all',page=0,selected=new Set(),detail=null,visible=[],pendingPack=null,editingSet=null,busy=false,refreshId=0;
 const size=20;
@@ -24,7 +24,7 @@ function render(){
   $('genre').replaceChildren(new Option('All genres',''),...genres.map(g=>new Option(g,g)));$('genre').value=genres.includes(prior)?prior:'';
   $('genres').replaceChildren(...genres.map(g=>new Option(g,g)));
   const target=$('target-set').value;$('target-set').replaceChildren(new Option('Choose a setlist',''),...model.sets.map(s=>new Option(s.name,s.id)));$('target-set').value=target;
-  const set=currentSet();$('collection-title').textContent=set?.name||(collection==='manual'?'Manual additions':'All songs');$('rename-set').hidden=!set;$('remove-selected').hidden=!set;
+  const set=currentSet();$('collection-title').textContent=set?.name||(collection==='manual'?'Manual additions':'All songs');$('rename-set').hidden=!set;$('delete-set').hidden=!set;$('remove-selected').hidden=!set;
   const filtered=filteredSongs(model.songs,model.sets,{collection,query:$('search').value,genre:$('genre').value,sort:$('sort').value});
   page=Math.max(0,Math.min(page,Math.ceil(filtered.length/size)-1));visible=filtered.slice(page*size,(page+1)*size);
   $('count').textContent=`${filtered.length} songs${set?.genre?' · '+set.genre:''}`;
@@ -73,3 +73,19 @@ $('pack-form').onsubmit=async e=>{e.preventDefault();const name=$('pack-name').v
 }catch(error){$('pack-error').textContent=error.message;}finally{busy=false;$('save-pack').disabled=false;$('cancel-pack').disabled=false;await refresh();}};
 $('pack-dialog').addEventListener('cancel',e=>{if(busy)e.preventDefault();});
 chrome.storage.onChanged.addListener(()=>refresh());refresh();setInterval(()=>{if(!busy)renderJob();},5000);
+
+let deletingSet=null;
+$('delete-set').onclick=()=>{deletingSet=currentSet()?.id;if(!deletingSet)return;$('delete-description').textContent=`Remove “${currentSet().name}”? By default, its songs and scores stay in All songs.`;$('delete-songs').checked=false;$('delete-error').textContent='';$('delete-dialog').showModal();};
+$('cancel-delete').onclick=()=>$('delete-dialog').close();
+$('delete-dialog').addEventListener('cancel',e=>{if(busy)e.preventDefault();});
+$('delete-form').onsubmit=async e=>{
+  e.preventDefault();if(busy)return;busy=true;$('confirm-delete').disabled=true;$('cancel-delete').disabled=true;
+  try{
+    const change=deleteCollection(await storage.get(null),deletingSet,$('delete-songs').checked);
+    await storage.set(change.updates);
+    if(change.remove.length)await storage.remove(change.remove);
+    collection='all';page=0;selected.clear();detail=null;$('song-panel').hidden=true;
+    $('delete-dialog').close();tell('Setlist deleted.');
+  }catch(error){$('delete-error').textContent=error.message;}
+  finally{busy=false;$('confirm-delete').disabled=false;$('cancel-delete').disabled=false;await refresh();}
+};
