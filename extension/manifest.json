@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Vibe Hero \u2014 Play on YouTube",
-  "version": "0.12.0",
+  "version": "0.12.1",
   "description": "Play Vibe Hero over the normal YouTube video player. Click to activate on the current watch page.",
   "permissions": [
     "activeTab",
@@ -12,7 +12,11 @@
   ],
   "action": {
     "default_title": "Play Vibe Hero on this YouTube video",
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/vh-16.png",
+      "32": "icons/vh-32.png"
+    }
   },
   "web_accessible_resources": [
     {
@@ -31,5 +35,11 @@
   "background": {
     "service_worker": "background.js",
     "type": "module"
+  },
+  "icons": {
+    "16": "icons/vh-16.png",
+    "32": "icons/vh-32.png",
+    "48": "icons/vh-48.png",
+    "128": "icons/vh-128.png"
   }
 }
