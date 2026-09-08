@@ -96,8 +96,8 @@ export function validateChart(value, duration) {
 }
 
 export class Game {
-  constructor(notes) {
-    this.notes = notes;
+  constructor(notes, chords = true) {
+    this.notes = chords ? notes : notes.map(note => ({ ...note, lanes: [note.lanes[Math.floor(note.lanes.length / 2)]] }));
     this.reset();
   }
   reset(time = -2) {
@@ -112,6 +112,7 @@ export class Game {
     this.hits = 0;
     this.misses = 0;
     this.feedback = "";
+    this.milestone = 0; this.milestoneUntil = -1;
     this.feedbackUntil = 0;
     this.lastTime = time;
     this.cursor = 0;
@@ -180,6 +181,7 @@ export class Game {
     if (note.duration > 0) this.holds.set(index, { until: note.time + note.duration, last: Math.max(time, note.time) });
     this.combo++;
     this.best = Math.max(this.best, this.combo);
+    if (this.combo % 50 === 0) { this.milestone = this.combo; this.milestoneUntil = time + 1.4; }
     this.hits++;
     this.score +=
       (perfect ? 100 : 60) * this.multiplier * (time < this.powerUntil ? 2 : 1);

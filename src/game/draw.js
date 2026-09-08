@@ -115,7 +115,7 @@ export function drawHighway(
     ctx.lineWidth = held[lane] ? 4 : 2;
     ctx.stroke();
     if (held[lane]) gem(point, lane, true);
-    ctx.font = "11px monospace";
+    ctx.font = "14px NightmareHero, monospace";
     ctx.textAlign = "center";
     ctx.fillStyle = "#aaa";
     ctx.fillText(labels[lane], point.x, point.y + 39, width * 0.13);

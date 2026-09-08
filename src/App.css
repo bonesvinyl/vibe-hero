@@ -1333,3 +1333,7 @@
 .tempo-multiples {
   margin-top: 10px;
 }
+
+@font-face{font-family:NightmareHero;src:url('/fonts/Nightmare_Hero_Normal.ttf') format('truetype');font-display:swap}
+body,button,input,select,textarea,h1,h2,h3,p,span,label,a,small,strong{font-family:NightmareHero,system-ui!important}
+.streak-banner{position:absolute;top:85px;left:25%;width:50%;text-align:center;font-size:28px;color:#fff0b6;text-shadow:0 2px 8px #000;pointer-events:none;z-index:5}

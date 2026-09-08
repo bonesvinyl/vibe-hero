@@ -61,3 +61,14 @@ The user's screenshot showed the initial BPM-practice-grid state after reported 
 45 Node tests and lint pass. Extension bundles include separate background/offscreen/player-bridge/library files. Tests cover persistent chart round-trip and quota errors, original-duration completion before a post-song ad, user-invoked capture/busy gating, stale/ad/pause clock suspension, and a synthetic offscreen lifecycle proving save-before-ready plus pause-before-capture-release on completion/cancellation/failure. These are mocks, not browser integration. The Downloads folder was inaccessible to the shell, so existence of a previous downloaded JSON could not be checked.
 
 Live acceptance remains: approve the updated extension's storage/capture permissions if prompted, prepare a short video from its popup, switch away, verify silence and progress, cancel once, complete once with an ad transition, reopen and load the saved chart, inspect JSON backup in browser Downloads. Verify Chrome/Brave offscreen resource loading, user-gesture capture eligibility, autoplay, context lifetime, save errors and library restoration. The existing browser-policy block prevents that verification here. No claim of a shipped server or unattended playlist queue is made.
+
+
+## Native 0.6: arcade controls and feedback
+
+Bar chords can be switched off in setup for single-fret play, retaining note timing and sustain lengths. The stored source chart remains intact. Nightmare Hero is bundled across the app, extension, and setup/library pages; attribution and source are in public/fonts/SOURCE.txt. The native HUD now has a framed score counter, circular multiplier, streak counter, and glowing bonus tubes. Center-screen hit judgments are removed; 50-note multiples briefly appear at the top and fade over 1.4 seconds.
+
+Native gameplay reserves Space for star power, including when a button has focus; P or Enter pauses. The web app retains its configurable bindings (Enter pauses by default). Bonus activation immediately cheers and restores the original layered synthetic arena ambience; it does not apply reverb to YouTube's audio. Five consecutive misses trigger boos subject to the reaction cooldown. Successful hits reset that miss run; rests and seeks cannot manufacture a boo. Crowd volume also controls the bonus ambience.
+
+Reload extension 0.6.0 and refresh the YouTube page. Automated keyboard, chart, milestone and reaction checks pass. Browser policy prevents live visual/audio verification of this update; no live acceptance claim is made.
+
+Validation: 48 Node tests pass; production app and extension builds and lint pass.

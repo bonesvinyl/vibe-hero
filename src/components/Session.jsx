@@ -67,7 +67,8 @@ export default function Session({ config, bindings, onExit, onResult }) {
       power: time < game.powerUntil,
       time: transport.getTime(),
       duration: transport.duration,
-      feedback: time < game.feedbackUntil ? game.feedback : "",
+      milestone: time < game.milestoneUntil ? game.milestone : 0,
+      milestoneOpacity: Math.min(1, Math.max(0, (game.milestoneUntil - time) / 0.6)),
     });
     const pause = () => {
       crowd.stop();
@@ -144,6 +145,7 @@ export default function Session({ config, bindings, onExit, onResult }) {
                     config.firstBeat,
                     config.difficulty,
                   ),
+              config.chords !== false,
             );
             if (state === "buffering" && transport.playing) phase("playing");
           } catch (cause) {
@@ -209,7 +211,7 @@ export default function Session({ config, bindings, onExit, onResult }) {
       try {
         if (config.buffer) {
           transport = new AudioTransport(config.buffer);
-          game = new Game(config.notes);
+          game = new Game(config.notes, config.chords !== false);
           phase("ready");
           if (config.videoId) {
             const node = document.createElement("div");
@@ -382,6 +384,7 @@ export default function Session({ config, bindings, onExit, onResult }) {
           }} />
         </label>
       </header>
+      <div className="streak-banner" style={{ opacity: hud.milestoneOpacity }} aria-live="polite">{hud.milestone ? `${hud.milestone} NOTE STREAK!` : ""}</div>
       {config.videoId && (
         <div className="immersion-controls">
           <span className="eyebrow">ON THE MAIN STAGE</span>
@@ -473,7 +476,7 @@ export default function Session({ config, bindings, onExit, onResult }) {
           />
           <div className="judgment">
             {status === "playing" &&
-              (hud.time < 0 ? Math.ceil(-hud.time) : hud.feedback)}
+              (hud.time < 0 ? Math.ceil(-hud.time) : "")}
           </div>
           {[
             "loading",

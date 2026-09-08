@@ -24,6 +24,7 @@ export default function App() {
     [videoOffset, setVideoOffset] = useState(0);
   const [difficulty, setDifficulty] = useState("medium"),
     [mode, setMode] = useState("tap"),
+    [chords, setChords] = useState(true),
     [bpm, setBpm] = useState(120),
     [firstBeat, setFirstBeat] = useState(2.5);
   const [offset, setOffset] = useState(() => {
@@ -217,6 +218,7 @@ export default function App() {
       imported,
       difficulty,
       mode,
+      chords,
       bpm,
       firstBeat,
       offset,
@@ -560,6 +562,7 @@ export default function App() {
                 <span className="section-number">02</span> Find your level
               </h2>
             </div>
+            <label>Bar chords <select value={String(chords)} onChange={event => setChords(event.target.value === "true")}><option value="true">On · chord accents</option><option value="false">Off · single notes only</option></select></label>
             <div className="difficulty-options">
               {[
                 {

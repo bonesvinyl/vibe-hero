@@ -162,3 +162,12 @@ Open a song’s YouTube tab, click the extension icon, then **Prepare quietly in
 **My song library** shows preparation progress, errors, cancellation and saved charts. Ready is published only after storage succeeds. Playback restores the saved chart without another listen. Closing/navigating the source tab or losing its state fails visibly; cancellation pauses the player before releasing capture. No server, external upload, downloader, notification service or paid infrastructure is introduced. Permission changes: storage, tabCapture and offscreen, retaining activeTab/scripting; no broad host grant. The original foreground sharing flow remains as a fallback.
 
 End-of-song handling uses the original recording duration and the last captured position, so an immediately following ad cannot replace the duration and strand a complete capture. A 250 ms end tolerance prevents losing the entire chart during that transition; the final fraction of a second may be omitted. Completed results can save even if the overlay closes during audio-context cleanup. Browser resource and audio behavior still require live acceptance testing.
+
+
+## Native 0.6: arcade controls and feedback
+
+Bar chords can be switched off in setup for single-fret play, retaining note timing and sustain lengths. The stored source chart remains intact. Nightmare Hero is bundled across the app, extension, and setup/library pages; attribution and source are in public/fonts/SOURCE.txt. The native HUD now has a framed score counter, circular multiplier, streak counter, and glowing bonus tubes. Center-screen hit judgments are removed; 50-note multiples briefly appear at the top and fade over 1.4 seconds.
+
+Native gameplay reserves Space for star power, including when a button has focus; P or Enter pauses. The web app retains its configurable bindings (Enter pauses by default). Bonus activation immediately cheers and restores the original layered synthetic arena ambience; it does not apply reverb to YouTube's audio. Five consecutive misses trigger boos subject to the reaction cooldown. Successful hits reset that miss run; rests and seeks cannot manufacture a boo. Crowd volume also controls the bonus ambience.
+
+Reload extension 0.6.0 and refresh the YouTube page. Automated keyboard, chart, milestone and reaction checks pass. Browser policy prevents live visual/audio verification of this update; no live acceptance claim is made.

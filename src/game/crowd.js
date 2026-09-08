@@ -1,19 +1,20 @@
 // Reactions use the song clock, so pauses and musical rests cannot count as misses.
 export class CrowdReactions {
-  reset() { this.time = null; this.hits = 0; this.misses = 0; this.bucket = 0; this.power = -1; this.missStart = null; this.lastMiss = -Infinity; this.lastSound = -Infinity; }
+  reset() { this.time = null; this.hits = 0; this.misses = 0; this.bucket = 0; this.power = -1; this.lastSound = -Infinity; this.consecutiveMisses = 0; this.justBonus = false; }
   constructor() { this.reset(); }
   update(game, time) {
-    if (this.time !== null && (time < this.time - 0.25 || time > this.time + 1 || game.hits < this.hits || game.misses < this.misses)) this.reset();
+    if (this.time !== null && (time < this.time - 0.25 || time > this.time + 1 || game.hits < this.hits || game.misses < this.misses)) { this.reset(); this.time = time; this.hits = game.hits; this.misses = game.misses; this.bucket = Math.floor(game.combo / 10); this.power = game.powerUntil; return null; }
     const hit = game.hits > this.hits, missed = game.misses > this.misses;
     const bucket = Math.floor(game.combo / 10);
-    const cheer = (hit && bucket > this.bucket) || (game.powerUntil > this.power && game.powerUntil > time);
-    if (hit || time - this.lastMiss > 2) this.missStart = null;
-    if (missed && !hit) { this.missStart ??= time; this.lastMiss = time; }
-    const boo = missed && !hit && this.missStart !== null && time - this.missStart >= 10;
+    this.justBonus = game.powerUntil > this.power && game.powerUntil > time;
+    const cheer = (hit && bucket > this.bucket) || this.justBonus;
+    if (hit) this.consecutiveMisses = 0;
+    else if (missed) this.consecutiveMisses += game.misses - this.misses;
+    const boo = missed && !hit && this.consecutiveMisses >= 5;
     this.time = time; this.hits = game.hits; this.misses = game.misses; this.bucket = bucket; this.power = game.powerUntil;
-    if (time >= 0 && (cheer || boo) && time - this.lastSound >= 8) {
+    if (time >= 0 && (cheer || boo) && (this.justBonus || time - this.lastSound >= 8)) {
       this.lastSound = time;
-      if (boo) this.missStart = time;
+      if (boo) this.consecutiveMisses = 0;
       return cheer ? 'cheer' : 'boo';
     }
     return null;
@@ -23,7 +24,7 @@ export class CrowdReactions {
 export class CrowdAudio {
   constructor(assetURL) {
     this.assetURL = assetURL; this.reactions = new CrowdReactions(); this.volume = 0.18;
-    this.buffers = new Map(); this.epoch = 0; this.closed = false;
+    this.effects = []; this.buffers = new Map(); this.epoch = 0; this.closed = false;
   }
   unlock() {
     if (this.closed) return;
@@ -31,8 +32,22 @@ export class CrowdAudio {
   }
   setVolume(value) { this.volume = Number.isFinite(value) ? Math.max(0, Math.min(0.4, value)) : 0; if (!this.volume) this.stop(); else if (this.gain) this.gain.gain.setValueAtTime(this.volume, this.context.currentTime); }
   reset() { this.stop(); this.reactions.reset(); }
-  update(game, time) { const reaction = this.reactions.update(game, time); if (reaction) this.play(reaction); }
-  stop() { this.epoch++; if (this.source) { this.source.stop(); this.source.disconnect(); this.source = null; } this.gain?.disconnect(); this.gain = null; }
+  update(game, time) { const reaction = this.reactions.update(game, time); if (reaction) this.play(reaction); if (this.reactions.justBonus) this.arena(); }
+  stop() { for (const effect of this.effects) { effect.osc.stop(); effect.nodes.forEach(node => node.disconnect()); } this.effects = []; this.epoch++; if (this.source) { this.source.stop(); this.source.disconnect(); this.source = null; } this.gain?.disconnect(); this.gain = null; }
+  arena() {
+    if (!this.volume || this.closed || this.context?.state !== 'running') return;
+    const ctx = this.context, now = ctx.currentTime;
+    for (const [frequency, type, level] of [[110, 'sine', 0.4], [220, 'triangle', 0.25], [55, 'sawtooth', 0.3]]) {
+      const osc = ctx.createOscillator(), gain = ctx.createGain(), filter = ctx.createBiquadFilter();
+      osc.type = type; osc.frequency.setValueAtTime(frequency, now);
+      filter.type = 'lowpass'; filter.frequency.setValueAtTime(800, now); filter.frequency.exponentialRampToValueAtTime(200, now + 5);
+      gain.gain.setValueAtTime(this.volume * level, now); gain.gain.exponentialRampToValueAtTime(0.0001, now + 8);
+      osc.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
+      const effect = { osc, nodes: [osc, filter, gain] }; this.effects.push(effect);
+      osc.onended = () => { effect.nodes.forEach(node => node.disconnect()); this.effects = this.effects.filter(value => value !== effect); };
+      osc.start(now); osc.stop(now + 8);
+    }
+  }
   async play(type) {
     if (!this.volume || this.closed || this.context?.state !== 'running') return;
     this.stop(); const epoch = this.epoch;

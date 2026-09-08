@@ -16,15 +16,19 @@ function mount() {
   const initialId = new URL(location.href).searchParams.get('v');
   const host = document.createElement('div'); host.id = 'vibe-hero-native-overlay';
   const root = host.attachShadow({ mode: 'open' });
-  root.innerHTML = `<style>${styles}</style><section class="stage"><canvas class="backdrop"></canvas><div class="shade"></div><header><strong>vibe<span>hero</span></strong><span class="native-label">ON YOUTUBE · NATIVE PLAYER</span><button data-action="minimize">YouTube controls</button><button data-action="fullscreen">Fullscreen</button><button data-action="close" aria-label="Close Vibe Hero">×</button></header><aside class="score"><span class="eyebrow">ON STAGE</span><h1></h1><strong class="points">0</strong><p class="stats">0 streak · 0% hit</p><p class="power">Star power: 0%</p><p class="hint">A S D F G · Enter pauses<br />Space activates star power</p></aside><aside class="meters"><div class="multiplier">1×</div><span>COMBO MULTIPLIER</span><progress class="combo-meter" max="10" value="0"></progress><div class="streak-count">0 note streak</div><h3>STAR POWER</h3><progress class="energy-meter" max="100" value="0"></progress><button data-action="bonus" class="bonus" disabled>Build your streak</button><p class="bonus-help">Hit notes to charge.<br>At 100%, press Space for<br>8 seconds of double points.</p></aside><canvas class="highway"></canvas><div class="feedback"></div><div class="setup"><h2>Play it where it plays.</h2><p class="status" role="status">YouTube handles the video. Vibe Hero follows its playback clock.</p><div class="fields"><label>BPM<input id="bpm" type="number" min="40" max="240" /></label><label>First beat (sec)<input id="firstBeat" type="number" min="0" max="120" step="0.05" /></label><label>Timing (ms)<input id="offset" type="number" min="-500" max="500" step="5" /></label><label>Difficulty<select id="difficulty"><option value="easy">Easy</option><option value="medium">Medium</option><option value="expert">Expert</option></select></label><label>Play style<select id="mode"><option value="tap">Keyboard / tap</option><option value="strum">Frets + arrow strum</option></select></label></div><div class="buttons"><button data-action="listen" class="primary">Listen &amp; build chart</button><button data-action="cancel-listen" hidden>Cancel listening</button><button data-action="export" disabled>Save chart</button><button data-action="download" disabled>Download JSON backup</button><p class="save-status" role="status" aria-live="polite">No saved chart loaded.</p></div><p class="listen-help">For quiet preparation, use the extension icon → Prepare quietly in background. This manual fallback shares the tab’s audio for one playthrough. Full-mix analysis, not guitar isolation.</p><div class="buttons"><button data-action="tap">Tap tempo</button><label class="file-label">Import chart<input type="file" accept=".json" id="chart" /></label><button class="primary" data-action="start">Play from beginning ▷</button></div><p class="chart-status">BPM practice grid · Bring detected BPM from the app or import an authored chart.</p></div><button class="resume" data-action="minimize">Return to fretboard ↗</button><footer><button data-action="pause">Pause / resume</button><span class="time">0:00</span><span>Music video stays behind the frets.</span><label>Crowd<input id="crowd-volume" aria-label="Crowd volume; zero mutes" type="range" min="0" max="40" value="18" /></label><label>Brightness<input id="brightness" type="range" min="25" max="100" value="75" /></label></footer></section>`;
+  root.innerHTML = `<style>${styles.replaceAll('__FONT_URL__', chrome.runtime.getURL('fonts/Nightmare_Hero_Normal.ttf'))}</style><section class="stage"><canvas class="backdrop"></canvas><div class="shade"></div><header><strong>vibe<span>hero</span></strong><span class="native-label">ON YOUTUBE · NATIVE PLAYER</span><button data-action="minimize">YouTube controls</button><button data-action="fullscreen">Fullscreen</button><button data-action="close" aria-label="Close Vibe Hero">×</button></header><aside class="score"><span class="eyebrow">ON STAGE</span><h1></h1><strong class="points">0</strong><p class="stats">0 streak · 0% hit</p><p class="power">Star power: 0%</p><p class="hint">A S D F G · P / Enter pauses<br />Space activates star power</p></aside><aside class="meters"><div class="charge-tubes" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div><div class="multiplier">1×</div><span>COMBO MULTIPLIER</span><progress class="combo-meter" max="10" value="0"></progress><div class="streak-count">0 note streak</div><h3>STAR POWER</h3><progress class="energy-meter" max="100" value="0"></progress><button data-action="bonus" class="bonus" disabled>Build your streak</button><p class="bonus-help">Hit notes to charge.<br>At 100%, press Space for<br>8 seconds of double points.</p></aside><canvas class="highway"></canvas><div class="feedback"></div><div class="streak-banner" aria-live="polite"></div><div class="setup"><h2>Play it where it plays.</h2><p class="status" role="status">YouTube handles the video. Vibe Hero follows its playback clock.</p><div class="fields"><label>BPM<input id="bpm" type="number" min="40" max="240" /></label><label>First beat (sec)<input id="firstBeat" type="number" min="0" max="120" step="0.05" /></label><label>Timing (ms)<input id="offset" type="number" min="-500" max="500" step="5" /></label><label>Difficulty<select id="difficulty"><option value="easy">Easy</option><option value="medium">Medium</option><option value="expert">Expert</option></select></label><label>Bar chords<select id="chords"><option value="true">On · chord accents</option><option value="false">Off · single notes</option></select></label><label>Play style<select id="mode"><option value="tap">Keyboard / tap</option><option value="strum">Frets + arrow strum</option></select></label></div><div class="buttons"><button data-action="listen" class="primary">Listen &amp; build chart</button><button data-action="cancel-listen" hidden>Cancel listening</button><button data-action="export" disabled>Save chart</button><button data-action="download" disabled>Download JSON backup</button><p class="save-status" role="status" aria-live="polite">No saved chart loaded.</p></div><p class="listen-help">For quiet preparation, use the extension icon → Prepare quietly in background. This manual fallback shares the tab’s audio for one playthrough. Full-mix analysis, not guitar isolation.</p><div class="buttons"><button data-action="tap">Tap tempo</button><label class="file-label">Import chart<input type="file" accept=".json" id="chart" /></label><button class="primary" data-action="start">Play from beginning ▷</button></div><p class="chart-status">BPM practice grid · Bring detected BPM from the app or import an authored chart.</p></div><button class="resume" data-action="minimize">Return to fretboard ↗</button><footer><button data-action="pause">Pause / resume</button><span class="time">0:00</span><span>Music video stays behind the frets.</span><label>Crowd<input id="crowd-volume" aria-label="Crowd volume; zero mutes" type="range" min="0" max="40" value="18" /></label><label>Brightness<input id="brightness" type="range" min="25" max="100" value="75" /></label></footer></section>`;
   document.documentElement.append(host);
+  if (typeof FontFace !== 'undefined' && document.fonts && ![...document.fonts].some(face => face.family === 'NightmareHero')) {
+    const face = new FontFace('NightmareHero', `url("${chrome.runtime.getURL('fonts/Nightmare_Hero_Normal.ttf')}")`);
+    document.fonts.add(face); face.load().catch(() => {});
+  }
   const $ = selector => root.querySelector(selector);
   const stage = $('.stage'), canvas = $('.highway'), backdrop = $('.backdrop'), context = backdrop.getContext('2d');
   const status = $('.status'), setup = $('.setup');
   let settings = parseHandoff(location.hash), game = null, video = null, started = false, frame, minimized = false, closed = false, chart = null, taps = [], lastHud = 0, lastAd = false, backdropFailed = false, listening = null, audioFrames = null, chartDuration = null;
   const held = new Set();
   const crowd = new CrowdAudio(file => chrome.runtime.getURL(`sounds/${file}`));
-  for (const key of ['bpm', 'firstBeat', 'offset', 'difficulty', 'mode']) $(`#${key}`).value = settings[key];
+  for (const key of ['bpm', 'firstBeat', 'offset', 'difficulty', 'mode', 'chords']) $(`#${key}`).value = settings[key];
   function getVideo() { return document.querySelector('#movie_player video') || document.querySelector('video.html5-main-video'); }
   function adPlaying() { return !!document.querySelector('#movie_player.ad-showing, #movie_player.ad-interrupting'); }
   function show(message) { status.textContent = message; setup.hidden = false; }
@@ -44,24 +48,26 @@ function mount() {
     if (!video || adPlaying()) { show('Let YouTube finish loading or playing its ad, then start your set.'); return; }
     if (!Number.isFinite(video.duration) || video.duration < 3 || video.duration > 1200) { show('Wait for a playable song between 3 seconds and 20 minutes. Live streams are not supported.'); return; }
     try {
-      const input = { bpm: Number($('#bpm').value), firstBeat: Number($('#firstBeat').value), offset: Number($('#offset').value), difficulty: $('#difficulty').value, mode: $('#mode').value };
+      const input = { bpm: Number($('#bpm').value), firstBeat: Number($('#firstBeat').value), offset: Number($('#offset').value), difficulty: $('#difficulty').value, mode: $('#mode').value, chords: $('#chords').value !== 'false' };
       const validated = nativeSettings(input);
       if (Object.keys(input).some(key => input[key] !== validated[key])) throw new Error('Check the BPM, first beat, and timing ranges.');
       settings = validated;
       if (audioFrames) chart = { version: 1, ...chartFromFrames(audioFrames, settings.difficulty), youtubeId: initialId };
-      game = new Game(chart ? validateChart(chart, video.duration) : practiceChart(video.duration, settings.bpm, settings.firstBeat, settings.difficulty));
+      game = new Game(chart ? validateChart(chart, video.duration) : practiceChart(video.duration, settings.bpm, settings.firstBeat, settings.difficulty), settings.chords);
       video.currentTime = 0; game.reset(-settings.offset / 1000); started = true; setup.hidden = true;
       await video.play();
     } catch (error) { started = false; pause(); show(error.message); }
   }
   const keydown = event => {
     const target = event.composedPath()[0];
-    if (target?.matches?.('input,select,textarea') || target?.isContentEditable || minimized || adPlaying() || listening) return;
-    if (![...KEYS, 'Enter', 'Space', 'ArrowUp', 'ArrowDown', 'Escape'].includes(event.code)) return;
+    if (minimized || adPlaying() || listening) return;
+    const editing = target?.matches?.('input:not([type=range]),select,textarea') || target?.isContentEditable;
+    if (editing) return;
+    if (![...KEYS, 'Enter', 'KeyP', 'Space', 'ArrowUp', 'ArrowDown', 'Escape'].includes(event.code)) return;
     event.preventDefault(); event.stopImmediatePropagation();
     if (event.repeat) return;
     if (event.code === 'Escape') { cleanup(); return; }
-    if (event.code === 'Enter') { toggle(); return; }
+    if (event.code === 'Enter' || event.code === 'KeyP') { toggle(); return; }
     held.add(event.code);
     if (!started || !video || video.paused || video.seeking || video.readyState < 3) return;
     const time = video.currentTime - settings.offset / 1000;
@@ -69,7 +75,7 @@ function mount() {
     else if (settings.mode === 'strum' && ['ArrowUp', 'ArrowDown'].includes(event.code)) game.hit(KEYS.flatMap((key, lane) => held.has(key) ? [lane] : []), time, true);
     else if (settings.mode === 'tap' && KEYS.includes(event.code)) game.hit([KEYS.indexOf(event.code)], time);
   };
-  const keyup = event => { held.delete(event.code); if (started && video && !video.paused && !adPlaying()) game.updateHolds(video.currentTime - settings.offset / 1000, KEYS.map(key => held.has(key))); };
+  const keyup = event => { if (event.code === 'Space' && !minimized && !adPlaying() && !listening && !event.composedPath?.()[0]?.matches?.('input:not([type=range]),select,textarea')) { event.preventDefault?.(); event.stopImmediatePropagation?.(); } held.delete(event.code); if (started && video && !video.paused && !adPlaying()) game.updateHolds(video.currentTime - settings.offset / 1000, KEYS.map(key => held.has(key))); };
   const onBlur = () => { if (!minimized && !adPlaying() && !listening) pause(); };
   const visibility = () => { if (document.hidden) onBlur(); };
   root.addEventListener('click', event => {
@@ -104,7 +110,7 @@ function mount() {
     finally { event.target.value = ''; }
   });
   function currentSettings() {
-    return { bpm: Number($('#bpm').value), firstBeat: Number($('#firstBeat').value), offset: Number($('#offset').value), difficulty: $('#difficulty').value, mode: $('#mode').value };
+    return { bpm: Number($('#bpm').value), firstBeat: Number($('#firstBeat').value), offset: Number($('#offset').value), difficulty: $('#difficulty').value, mode: $('#mode').value, chords: $('#chords').value !== 'false' };
   }
   async function persistChart(title = $('h1').textContent) {
     if (!chart) { if (!closed) $('.save-status').textContent = 'No chart to save yet. Wait for “Chart ready” or import a chart.'; return; }
@@ -119,7 +125,7 @@ function mount() {
   loadChart(chrome.storage.local, initialId).then(record => {
     if (!record || closed || started || listening || chart) return;
     chart = record; chartDuration = record.duration;
-    for (const key of ['bpm', 'firstBeat', 'offset', 'difficulty', 'mode']) $(`#${key}`).value = record.settings[key];
+    for (const key of ['bpm', 'firstBeat', 'offset', 'difficulty', 'mode', 'chords']) $(`#${key}`).value = record.settings[key];
     $('[data-action=export]').disabled = false; $('[data-action=download]').disabled = false;
     $('.chart-status').textContent = `Saved audio/custom chart · ${record.notes.length} notes`;
     $('.save-status').textContent = 'Loaded from your Vibe Hero library. Ready to play—no listening needed.';
@@ -179,7 +185,11 @@ function mount() {
           $('.bonus').textContent = powered ? `BONUS · ${Math.ceil(game.powerUntil - time)}s` : game.energy >= 100 ? 'SPACE · Activate bonus' : `${game.energy}% charged`;
           stage.classList.toggle('powered', powered);
           $('.points').textContent = game.score.toLocaleString(); $('.stats').textContent = `${game.combo} streak · ${game.accuracy}% hit`; $('.power').textContent = `Star power: ${game.energy}% · ${game.multiplier}×`;
-          $('.feedback').textContent = video.paused && started ? 'Paused · Enter to resume' : video.readyState < 3 ? 'Buffering…' : time < game.feedbackUntil ? game.feedback : '';
+          $('.feedback').textContent = video.paused && started ? 'Paused · P / Enter to resume' : video.readyState < 3 ? 'Buffering…' : '';
+          $('.streak-banner').textContent = time < game.milestoneUntil ? `${game.milestone} NOTE STREAK!` : '';
+          $('.streak-banner').style.opacity = Math.min(1, Math.max(0, (game.milestoneUntil - time) / 0.6));
+          stage.style.setProperty('--charge', `${powered ? Math.max(0, (game.powerUntil - time) / 8 * 100) : game.energy}%`);
+          stage.style.setProperty('--combo', `${game.multiplier >= 4 ? 100 : (game.combo % 10) * 10}%`);
           $('.time').textContent = `${Math.floor(video.currentTime / 60)}:${String(Math.floor(video.currentTime % 60)).padStart(2, '0')}`;
         }
         if (started && video.ended) { game.lastTime = video.duration + 0.15; game.update(game.lastTime); started = false; show(`Set complete. ${game.score.toLocaleString()} points · ${game.accuracy}% hit · best streak ${game.best}.`); }

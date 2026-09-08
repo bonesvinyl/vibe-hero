@@ -40,3 +40,21 @@ test('audio chart places attacks on the signal, sustains stop before silence, an
   assert.ok(chartFromFrames(frames, 'easy').notes.every(n => n.lanes.length === 1));
   assert.deepEqual(chartFromFrames(frames.map(f => ({ ...f, flux: 0, energy: 0 }))).notes, []);
 });
+
+test('single-note mode preserves timing and holds without mutating the original chord chart', () => {
+  const notes = [{ time: 1, lanes: [0, 2, 4], duration: 1 }];
+  const solo = new Game(notes, false), chords = new Game(notes, true);
+  assert.deepEqual(solo.notes, [{ time: 1, lanes: [2], duration: 1 }]);
+  assert.equal(chords.notes[0].lanes.length, 3);
+  assert.equal(notes[0].lanes.length, 3);
+});
+
+test('streak milestones occur at 50 and 100 and expire quickly', () => {
+  const game = new Game(Array.from({ length: 100 }, (_, i) => ({ time: i * 0.5, lanes: [0] })));
+  for (let i = 0; i < 100; i++) {
+    game.hit([0], i * 0.5);
+    if (i === 49) { assert.equal(game.milestone, 50); assert.equal(game.milestoneUntil, 25.9); }
+  }
+  assert.equal(game.milestone, 100);
+  game.reset(); assert.equal(game.milestone, 0);
+});
