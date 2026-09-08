@@ -1,4 +1,4 @@
-export const RULESET = 'encore-0.7';
+export const RULESET = 'encore-0.8';
 export async function scoreRecord(game, settings, videoId, title, username) {
   username = String(username || '').trim().slice(0, 24);
   if (!username) throw new Error('Enter a player name first.');

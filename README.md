@@ -191,3 +191,14 @@ Completed native runs can be saved with a display name to one storage key per at
 A SQLite community leaderboard prototype is in server/leaderboard.js. It has validated submissions, idempotent IDs, basic rate limiting and rankings separated by exact video and chart/settings. It is tested locally but not hosted or connected to the extension. See server/README.md for the remaining public-service work. No public global leaderboard exists yet.
 
 Validation: 57 tests, lint and both production builds pass. The suite covers difficulty/hold mapping, failure/restart, score persistence, leaderboard HTTP behavior, sustained cheers, wet-only echo controls, and offscreen dry-output/ownership/cleanup. Live browser verification remains blocked.
+
+
+## Sound pack and pacing 0.8
+
+Star power now has a 60-second minimum initial charge and 60 seconds between activations, measured on the song clock. Hits still earn charge; passive waiting alone does not fill it. The displayed meter is capped by elapsed charge time, and the button shows the recharge countdown. Pauses do not advance recharge. The eight-second bonus duration is unchanged. Score ruleset is encore-0.8 to separate these runs from the more generous old bonus scoring.
+
+Removed the synthetic oscillators used for arena/amp and miss-clang sounds. The supplied YouTube references were retrieved into temporary files and cut into 13 local MP3 assets: one intro, six separated misses, five short star activation cues, and one 20.5-second real-crowd clip. CUE-SOURCES.json records exact input URLs and cut times. Cuts have boundary fades; crowd audio is normalized to -14 LUFS / -1.5 dBTP and bonus playback is 2.3 times the Crowd slider level (capped). Activation cues play only at activation, not on pause/resume; the crowd fills the remaining bonus duration on resume. Repeated-miss reactions randomly select a miss sample, leaving isolated misses silent.
+
+The actual music now also passes through a parallel 2.6-second convolution reverb during bonus, alongside the existing feedback echo. Generated impulse data describes room decay; no audible oscillator is mixed into the song. Muting the wet output leaves dry music connected. Native songs wait four seconds with the supplied intro cue before playing; local files have a four-second preroll, and the web embed has a pre-play countdown. Cancelling a native countdown does not start playback later. Fixed negative preroll time accidentally being interpreted as active star power.
+
+Validation: 61 tests, lint and app/extension production builds pass. Sound files decode successfully and their cut boundaries were checked by signal/silence analysis. The final in-game sound balance and browser playback are still not live-verified because the browser inspection tool remains blocked.

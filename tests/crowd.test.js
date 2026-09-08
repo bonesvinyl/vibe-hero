@@ -56,8 +56,15 @@ test('bonus cheer lasts the bonus window and is restarted for the remainder afte
   audio.play=(...args)=>calls.push(args); audio.arena=()=>{};
   const game={hits:0,misses:0,combo:0,powerUntil:8,rock:70};
   audio.update(game,0); audio.update(game,0.5);
-  assert.equal(calls.length,1); assert.deepEqual(calls[0],['cheer',8,1.45,true]);
+  assert.equal(calls.length,1); assert.deepEqual(calls[0],['cheer',8,2.3,true]);
   audio.stop(); audio.update(game,1);
   assert.equal(calls[1][1],7);
   audio.update(game,8); assert.equal(audio.bonusPlaying,false);
+});
+
+test('preroll never starts bonus sound or interrupts the intro cue', () => {
+  const audio=new CrowdAudio(x=>x), calls=[];
+  audio.play=(...args)=>calls.push(args);
+  audio.update({hits:0,misses:0,combo:0,powerUntil:-1},-4);
+  assert.equal(calls.length,0);
 });

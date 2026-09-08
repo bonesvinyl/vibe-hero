@@ -102,7 +102,7 @@ export function drawHighway(
         line(project(lane + 0.5, tail), project(lane + 0.5, p), active ? "#b8faff" : COLORS[lane], Math.max(3, width * 0.013));
         line(project(lane + 0.5, tail), project(lane + 0.5, p), "#ffffff99", 2);
       }
-      gem(project(lane + 0.5, p), lane, active || time < game.powerUntil);
+      gem(project(lane + 0.5, p), lane, active || time >= 0 && time < game.powerUntil);
     }
   }
   const sustaining = new Set([...game.holds?.keys() || []].flatMap(i => game.notes[i].lanes));
@@ -121,7 +121,7 @@ export function drawHighway(
     if (held[lane]) gem(point, lane, true);
     const flame = sustaining.has(lane) ? 1 : Math.max(0, ((game.flames?.[lane] || -1) - time) / 0.32);
     if (flame > 0) {
-      const powered = time < game.powerUntil, h = radius * (reduced ? 1.3 : 3.2) * (0.65 + flame * 0.35);
+      const powered = time >= 0 && time < game.powerUntil, h = radius * (reduced ? 1.3 : 3.2) * (0.65 + flame * 0.35);
       ctx.save(); ctx.globalAlpha = Math.min(1, flame); ctx.shadowColor = powered ? '#6ef4ff' : '#ffb62c'; ctx.shadowBlur = 22;
       const glow = ctx.createLinearGradient(0, point.y, 0, point.y - h);
       glow.addColorStop(0, '#fffce9'); glow.addColorStop(0.35, powered ? '#8bffff' : '#fff465'); glow.addColorStop(1, powered ? '#1facff00' : '#ff670000');

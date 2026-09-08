@@ -27,7 +27,7 @@ function fixture() {
   const window = { addEventListener(type, callback) { listeners.set(type, callback); }, removeEventListener(type) { listeners.delete(type); } };
   const source = readFileSync(new URL('../extension/overlay.js', import.meta.url), 'utf8').replace(/^import .*;\n/gm, '');
   vm.runInNewContext(source, { VideoBonusEcho, scoreRecord, saveScore, saveChart, loadChart, chrome: { runtime: { getURL: path => path }, storage: { local: { get: async () => ({}) } } }, CrowdAudio, Game, practiceChart, validateChart, KEYS, nativeSettings, parseHandoff, styles: '', document, window,
-    location: { href: 'https://www.youtube.com/watch?v=WtuoFv4dcwM', hash: '' }, URL, Event, performance,
+    location: { href: 'https://www.youtube.com/watch?v=WtuoFv4dcwM', hash: '' }, URL, Event, performance: { now: () => 0 },
     requestAnimationFrame(callback) { frame = callback; return 1; }, cancelAnimationFrame() { frame = null; },
     innerWidth: 1200, innerHeight: 800, drawHighway(_canvas, game) { drawnGame = game; } });
   return { video, nodes, host, listeners, tick: time => frame?.(time), setAd: value => { ad = value; }, game: () => drawnGame,
@@ -39,7 +39,7 @@ test('native overlay follows media time, freezes on pause/ads, and cleans up on 
   const f = fixture();
   f.tick(0);
   assert.equal(f.video.paused, true);
-  f.click('start');
+  f.click('start'); f.tick(4000);
   await Promise.resolve();
   f.tick(100);
   f.video.currentTime = 0.8; f.tick(200);
@@ -62,8 +62,8 @@ test('native overlay follows media time, freezes on pause/ads, and cleans up on 
 
 
 test('Space activates bonus without pausing or clicking a focused button; P pauses', async () => {
-  const f = fixture(); f.tick(0); f.click('start'); await Promise.resolve(); f.tick(100);
-  f.game().energy = 100;
+  const f = fixture(); f.tick(0); f.click('start'); f.tick(4000); await Promise.resolve(); f.tick(100);
+  f.game().energy = 100; f.game().nextPowerAt = 0;
   let prevented = 0, stopped = 0;
   const event = { code: 'Space', composedPath: () => [{ matches: () => false }],
     preventDefault() { prevented++; }, stopImmediatePropagation() { stopped++; } };
@@ -74,4 +74,15 @@ test('Space activates bonus without pausing or clicking a focused button; P paus
   assert.equal(prevented, 2); assert.equal(stopped, 2);
   f.key('KeyP'); assert.equal(f.video.paused, true);
   f.click('close');
+});
+
+test('native countdown keeps music paused for four seconds and can be cancelled', async () => {
+  const f=fixture(); f.tick(0); f.click('start'); await Promise.resolve();
+  f.tick(1000); assert.equal(f.video.paused,true);
+  assert.match(f.nodes.get('.feedback').textContent,/3.*GET READY/);
+  f.key('Enter'); f.tick(5000); assert.equal(f.video.paused,true);
+  f.click('close');
+  const next=fixture(); next.tick(0); next.click('start'); await Promise.resolve();
+  next.tick(3999); assert.equal(next.video.paused,true);
+  next.tick(4000); assert.equal(next.video.paused,false); next.click('close');
 });

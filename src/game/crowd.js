@@ -24,58 +24,49 @@ export class CrowdReactions {
 export class CrowdAudio {
   constructor(assetURL) {
     this.assetURL = assetURL; this.reactions = new CrowdReactions(); this.volume = 0.18;
-    this.effects = []; this.buffers = new Map(); this.epoch = 0; this.closed = false;
+    this.voices = []; this.buffers = new Map(); this.epoch = 0; this.closed = false;
   }
   unlock() {
     if (this.closed) return;
     try { this.context ??= new AudioContext(); this.context.resume().catch(() => {}); } catch { /* Audio feedback is optional. */ }
   }
-  setVolume(value) { this.volume = Number.isFinite(value) ? Math.max(0, Math.min(0.4, value)) : 0; if (!this.volume) this.stop(); else if (this.gain) this.gain.gain.setValueAtTime(this.volume, this.context.currentTime); }
+  setVolume(value) { this.volume = Number.isFinite(value) ? Math.max(0, Math.min(0.4, value)) : 0; if (!this.volume) this.stop(); else if (this.gain) this.gain.gain.setValueAtTime(Math.min(0.65, this.volume * (this.boost || 1)), this.context.currentTime); }
   reset() { this.stop(); this.reactions.reset(); }
   update(game, time) {
-    const reaction = this.reactions.update(game, time), remaining = game.powerUntil - time;
+    const reaction = this.reactions.update(game, time), remaining = time >= 0 && game.powerUntil > 0 ? game.powerUntil - time : 0;
     if (remaining > 0 && (!this.bonusPlaying || this.reactions.justBonus)) {
-      this.play('cheer', remaining, 1.45, true); this.bonusPlaying = true; this.arena(remaining);
+      this.play('cheer', remaining, 2.3, true); this.bonusPlaying = true; if (this.reactions.justBonus) this.cue(`star${1 + Math.floor(Math.random() * 5)}.mp3`, 1.6);
     } else if (remaining <= 0) {
       if (this.bonusPlaying) this.stop();
       if (reaction) { this.play(reaction, reaction === 'boo' ? 4 : 3.5, reaction === 'boo' ? 1 + (100 - (game.rock ?? 70)) / 65 : 1); if (reaction === 'boo') this.missClang(); }
     }
   }
-  stop() { this.bonusPlaying = false; for (const effect of this.effects) { effect.osc.stop(); effect.nodes.forEach(node => node.disconnect()); } this.effects = []; this.epoch++; if (this.source) { this.source.stop(); this.source.disconnect(); this.source = null; } this.gain?.disconnect(); this.gain = null; }
-  missClang() {
-    if (!this.volume || this.context?.state !== 'running') return;
-    const ctx = this.context, now = ctx.currentTime;
-    for (const frequency of [73, 109]) {
-      const osc = ctx.createOscillator(), gain = ctx.createGain();
-      osc.type = 'sawtooth'; osc.frequency.setValueAtTime(frequency, now); osc.frequency.exponentialRampToValueAtTime(frequency * 0.55, now + 0.28);
-      gain.gain.setValueAtTime(this.volume * 0.45, now); gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.32);
-      osc.connect(gain); gain.connect(ctx.destination);
-      const effect = { osc, nodes: [osc, gain] }; this.effects.push(effect);
-      osc.onended = () => { effect.nodes.forEach(n => n.disconnect()); this.effects = this.effects.filter(e => e !== effect); };
-      osc.start(now); osc.stop(now + 0.33);
-    }
+  stop() { for (const voice of this.voices) { voice.source.stop(); voice.source.disconnect(); voice.gain.disconnect(); } this.voices = []; this.bonusPlaying = false; this.epoch++; if (this.source) { this.source.stop(); this.source.disconnect(); this.source = null; } this.gain?.disconnect(); this.gain = null; }
+  load(file) {
+    if (!this.buffers.has(file)) this.buffers.set(file, fetch(this.assetURL(file)).then(response => { if (!response.ok) throw new Error('Sound unavailable'); return response.arrayBuffer(); }).then(bytes => this.context.decodeAudioData(bytes)).catch(error => { this.buffers.delete(file); throw error; }));
+    return this.buffers.get(file);
   }
-  arena(duration = 8) {
+  async cue(file, boost = 1.5) {
     if (!this.volume || this.closed || this.context?.state !== 'running') return;
-    const ctx = this.context, now = ctx.currentTime;
-    for (const [frequency, type, level] of [[110, 'sine', 0.4], [220, 'triangle', 0.25], [55, 'sawtooth', 0.3]]) {
-      const osc = ctx.createOscillator(), gain = ctx.createGain(), filter = ctx.createBiquadFilter();
-      osc.type = type; osc.frequency.setValueAtTime(frequency, now);
-      filter.type = 'lowpass'; filter.frequency.setValueAtTime(800, now); filter.frequency.exponentialRampToValueAtTime(200, now + 5);
-      gain.gain.setValueAtTime(this.volume * level * 1.6, now); gain.gain.setValueAtTime(this.volume * level * 1.6, now + Math.max(0, duration - 0.5)); gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-      osc.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
-      const effect = { osc, nodes: [osc, filter, gain] }; this.effects.push(effect);
-      osc.onended = () => { effect.nodes.forEach(node => node.disconnect()); this.effects = this.effects.filter(value => value !== effect); };
-      osc.start(now); osc.stop(now + duration);
-    }
+    const epoch = this.epoch;
+    try {
+      const buffer = await this.load(file);
+      if (this.closed || this.epoch !== epoch || !this.volume) return;
+      const source = this.context.createBufferSource(), gain = this.context.createGain();
+      source.buffer = buffer; gain.gain.value = Math.min(0.65, this.volume * boost);
+      source.connect(gain); gain.connect(this.context.destination);
+      const voice = { source, gain }; this.voices.push(voice);
+      source.onended = () => { source.disconnect(); gain.disconnect(); this.voices = this.voices.filter(v => v !== voice); };
+      source.start();
+    } catch { /* Optional cue must never prevent gameplay. */ }
   }
+  missClang() { this.cue(`miss${1 + Math.floor(Math.random() * 6)}.mp3`, 1.5); }
   async play(type, duration = 3.5, boost = 1, loop = false) {
     if (!this.volume || this.closed || this.context?.state !== 'running') return;
-    this.stop(); const epoch = this.epoch;
-    const file = `${type}${Math.random() < 0.5 ? 1 : 2}.mp3`;
+    this.stop(); this.boost = boost; const epoch = this.epoch;
+    const file = type === 'cheer' ? 'crowd-live.mp3' : `${type}${Math.random() < 0.5 ? 1 : 2}.mp3`;
     try {
-      if (!this.buffers.has(file)) this.buffers.set(file, fetch(this.assetURL(file)).then(response => { if (!response.ok) throw new Error('Sound unavailable'); return response.arrayBuffer(); }).then(bytes => this.context.decodeAudioData(bytes)));
-      const buffer = await this.buffers.get(file);
+      const buffer = await this.load(file);
       if (this.closed || epoch !== this.epoch || !this.volume || this.context.state !== 'running') return;
       const source = this.context.createBufferSource(), gain = this.context.createGain();
       source.buffer = buffer; source.connect(gain); gain.connect(this.context.destination);

@@ -61,7 +61,7 @@ export class AudioTransport {
   constructor(buffer) {
     this.buffer = buffer;
     this.context = new AudioContext();
-    this.position = -2.4;
+    this.position = -4;
     this.playing = false;
     this.duration = buffer.duration;
     this.source = null;

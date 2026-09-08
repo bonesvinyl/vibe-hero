@@ -52,3 +52,14 @@ test('initial audio preroll remains score eligible while a later seek does not',
   for(let time=-2;time<=1;time+=0.5) game.update(time);
   game.update(-1); assert.equal(game.eligible,false);
 });
+
+test('star power takes a song-minute to charge and cannot reactivate within 60 seconds', () => {
+  const game=new Game(Array.from({length:400},(_,i)=>({time:i*.5,lanes:[0]})));
+  game.reset(0);
+  for(let t=0;t<=59.5;t+=.5) game.hit([0],t);
+  assert.ok(game.energy<100); game.activate(59.5); assert.equal(game.powerUntil,-1);
+  game.hit([0],60); game.activate(60); assert.equal(game.powerUntil,68); assert.equal(game.nextPowerAt,120);
+  for(let t=60.5;t<=119.5;t+=.5) game.hit([0],t);
+  assert.ok(game.energy<100); game.activate(119.5); assert.equal(game.powerUntil,68);
+  game.hit([0],120); game.activate(120); assert.equal(game.powerUntil,128);
+});

@@ -144,6 +144,7 @@ export class Game {
     this.rock = 70; this.failed = false; this.eligible = time <= 0;
     this.energy = 0;
     this.powerUntil = -1;
+    this.nextPowerAt = 60;
   }
   update(time) {
     if (this.failed) return;
@@ -217,7 +218,7 @@ export class Game {
     this.rock = Math.min(100, this.rock + 2);
     this.score +=
       (perfect ? 100 : 60) * this.multiplier * (time < this.powerUntil ? 2 : 1);
-    this.energy = Math.min(100, this.energy + 4);
+    this.energy = Math.min(100, this.energy + 4, Math.max(0, (time - (this.nextPowerAt - 60)) / 60 * 100));
     this.feedback = perfect ? "Perfect" : "Good";
     this.feedbackUntil = time + 0.5;
     return true;
@@ -241,9 +242,10 @@ export class Game {
     }
   }
   activate(time) {
-    if (!this.failed && this.energy >= 100 && time >= 0 && time >= this.powerUntil) {
+    if (!this.failed && this.energy >= 100 && time >= 0 && time >= this.powerUntil && time >= this.nextPowerAt) {
       this.energy = 0;
       this.powerUntil = time + 8;
+      this.nextPowerAt = time + 60;
     }
   }
   get multiplier() {

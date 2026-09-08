@@ -10,6 +10,19 @@ export class BonusEcho {
     source.connect(this.input); this.input.connect(this.delay); this.delay.connect(this.filter);
     this.filter.connect(this.feedback); this.feedback.connect(this.delay);
     this.filter.connect(this.output); this.output.connect(context.destination);
+    this.reverbNodes = [];
+    if (context.createConvolver && context.createBuffer) {
+      const convolver = context.createConvolver(), gain = context.createGain();
+      const impulse = context.createBuffer(2, Math.ceil(context.sampleRate * 2.6), context.sampleRate);
+      let seed = 71;
+      for (let channel = 0; channel < 2; channel++) {
+        const data = impulse.getChannelData(channel);
+        for (let i = 0; i < data.length; i++) { seed = (seed * 16807) % 2147483647; data[i] = (seed / 1073741823.5 - 1) * Math.pow(1 - i / data.length, 2.4); }
+      }
+      convolver.buffer = impulse; gain.gain.value = 0.65;
+      this.input.connect(convolver); convolver.connect(gain); gain.connect(this.output);
+      this.reverbNodes = [convolver, gain];
+    }
     this.active = false;
   }
   set(active) {
@@ -20,7 +33,7 @@ export class BonusEcho {
       param.setTargetAtTime(value, this.context.currentTime, active ? 0.08 : 0.025);
     }
   }
-  destroy() { this.source.disconnect(this.input); for (const node of [this.input, this.delay, this.feedback, this.filter, this.output]) node.disconnect(); }
+  destroy() { this.source.disconnect(this.input); for (const node of [this.input, this.delay, this.feedback, this.filter, this.output, ...this.reverbNodes]) node.disconnect(); }
 }
 
 export class VideoBonusEcho {

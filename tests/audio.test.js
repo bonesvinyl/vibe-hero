@@ -30,20 +30,20 @@ test("audio clock has a preroll, freezes on pause, and resumes from the exact of
   try {
     const transport = new AudioTransport({ duration: 20 });
     await transport.play();
-    assert.deepEqual(sources[0].startArgs, [12.4, 0]);
+    assert.deepEqual(sources[0].startArgs, [14, 0]);
     transport.context.currentTime = 11;
-    assert.ok(Math.abs(transport.getTime() + 1.4) < 0.0001);
+    assert.ok(Math.abs(transport.getTime() + 3) < 0.0001);
     transport.pause();
     assert.equal(sources[0].stopped, true);
     transport.context.currentTime = 100;
-    assert.ok(Math.abs(transport.getTime() + 1.4) < 0.0001);
+    assert.ok(Math.abs(transport.getTime() + 3) < 0.0001);
     await transport.play();
-    assert.deepEqual(sources[1].startArgs, [101.4, 0]);
+    assert.deepEqual(sources[1].startArgs, [103, 0]);
     transport.context.currentTime = 104;
     transport.pause();
-    assert.ok(Math.abs(transport.getTime() - 2.6) < 0.0001);
+    assert.ok(Math.abs(transport.getTime() - 1) < 0.0001);
     await transport.play();
-    assert.ok(Math.abs(sources[2].startArgs[1] - 2.6) < 0.0001);
+    assert.ok(Math.abs(sources[2].startArgs[1] - 1) < 0.0001);
     transport.destroy();
     assert.equal(transport.context.closed, true);
     assert.equal(transport.playing, false);

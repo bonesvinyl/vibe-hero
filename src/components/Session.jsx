@@ -30,7 +30,7 @@ export default function Session({ config, bindings, onExit, onResult }) {
     score: 0,
     combo: 0,
     accuracy: 0,
-    time: -2.4,
+    time: -4,
     duration: config.buffer?.duration || 0,
     energy: 0,
     multiplier: 1,
@@ -51,7 +51,7 @@ export default function Session({ config, bindings, onExit, onResult }) {
       lastVideoSync = 0,
       stopInput = () => {},
       metadataDeadline = 0,
-      viewingVideo = false;
+      viewingVideo = false, countdown = 0;
     const offset = config.offset / 1000;
     const phase = (value) => {
       state = value;
@@ -66,15 +66,17 @@ export default function Session({ config, bindings, onExit, onResult }) {
       accuracy: game.accuracy,
       hits: game.hits,
       misses: game.misses,
-      energy: game.energy,
+      energy: Math.floor(game.energy),
+      recharge: Math.max(0, Math.ceil(game.nextPowerAt - time)),
       multiplier: game.multiplier,
-      power: time < game.powerUntil,
+      power: time >= 0 && time < game.powerUntil,
       time: transport.getTime(),
       duration: transport.duration,
       milestone: time < game.milestoneUntil ? game.milestone : 0,
       milestoneOpacity: Math.min(1, Math.max(0, (game.milestoneUntil - time) / 0.6)),
     });
     const pause = () => {
+      if (countdown) { countdown = 0; phase("ready"); }
       crowd.stop();
       if (!transport || !["playing", "buffering"].includes(state)) return;
       transport.pause();
@@ -100,6 +102,8 @@ export default function Session({ config, bindings, onExit, onResult }) {
       if (!transport || completed || disposed) return;
       try {
         crowd.unlock();
+        if (!config.buffer && state === "ready") { countdown = performance.now() + 4000; crowd.cue("intro.mp3", 2); phase("countdown"); return; }
+        if (config.buffer && transport.getTime() <= -3.9) crowd.cue("intro.mp3", 2);
         await transport.play();
         if (!disposed) {
           if (!game) metadataDeadline = performance.now() + 15000;
@@ -112,7 +116,7 @@ export default function Session({ config, bindings, onExit, onResult }) {
     };
     runtime.current = {
       toggle: () =>
-        ["playing", "buffering"].includes(state) ? pause() : play(),
+        ["playing", "buffering", "countdown"].includes(state) ? pause() : play(),
       pause,
       videoControls: (show) => {
         pause();
@@ -130,6 +134,7 @@ export default function Session({ config, bindings, onExit, onResult }) {
     };
     const tick = (now) => {
       if (disposed) return;
+      if (countdown && now >= countdown) { countdown = 0; crowd.stop(); play(); }
       // YouTube may return duration=0 at onReady, before playback exposes metadata.
       if (transport && !game && state !== "error") {
         const duration = transport.readDuration?.() || 0;
@@ -168,10 +173,10 @@ export default function Session({ config, bindings, onExit, onResult }) {
       if (game && transport) {
         const mediaTime = transport.getTime(),
           chartTime = mediaTime - offset;
-        if (state === "playing" && transport.playing) { game.update(chartTime); game.updateHolds(chartTime, held); crowd.update(game, chartTime); transport.setBonus?.(chartTime < game.powerUntil);
+        if (state === "playing" && transport.playing) { game.update(chartTime); game.updateHolds(chartTime, held); crowd.update(game, chartTime); transport.setBonus?.(chartTime >= 0 && chartTime < game.powerUntil);
           if (game.failed) { completed = true; pause(); transport.setBonus?.(false); crowd.play('boo', 5, 2.5); phase('failed'); }
         }
-        else if (state !== "failed") crowd.stop();
+        else if (state !== "failed" && !countdown) crowd.stop();
         if (
           state === "playing" &&
           mediaTime >= transport.duration + Math.max(0, offset) + 0.15
@@ -193,7 +198,7 @@ export default function Session({ config, bindings, onExit, onResult }) {
           highwayOpacity.current,
         );
         if (now - lastHud > 70 && state !== "finished") {
-          setHud(snapshot(chartTime));
+          setHud({ ...snapshot(chartTime), countdown: countdown ? Math.max(1, Math.ceil((countdown - now) / 1000)) : 0 });
           lastHud = now;
         }
         if (backdrop && !viewingVideo && now - lastVideoSync > 700) {
@@ -457,7 +462,7 @@ export default function Session({ config, bindings, onExit, onResult }) {
           </div>
           <div className="energy-label">
             <span>STAR POWER</span>
-            <span>{hud.power ? "ACTIVE / 2×" : `${hud.energy}%`}</span>
+            <span>{hud.power ? "ACTIVE / 2×" : hud.recharge ? `RECHARGE ${hud.recharge}s` : `${hud.energy}%`}</span>
           </div>
           <progress value={hud.energy} max="100" aria-label="Star power" />
           <p className="small">
@@ -492,7 +497,7 @@ export default function Session({ config, bindings, onExit, onResult }) {
             "paused",
             "buffering",
             "error",
-            "finished", "failed",
+            "finished", "failed", "countdown",
           ].includes(status) && (
             <div className="stage-overlay">
               <span className="eyebrow">
@@ -502,6 +507,7 @@ export default function Session({ config, bindings, onExit, onResult }) {
                 {
                   {
                     loading: "Setting the stage…",
+                    countdown: `${hud.countdown || 4} · Get ready`,
                     ready: "You’re up.",
                     paused: "Take a breath.",
                     buffering: "Waiting for the music…",
