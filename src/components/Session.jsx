@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Game, practiceChart, validateChart } from "../game/chart";
 import { AudioTransport } from "../game/audio";
 import { createVideo } from "../game/youtube";
-import { bindingLabel, listenInput } from "../game/controller";
+import { bindingLabel, listenInput, readStored, writeStored } from "../game/controller";
 import { drawHighway } from "../game/draw";
 import { CrowdAudio } from "../game/crowd";
 import { SampledMediaClock } from "../game/clock";
@@ -12,6 +12,8 @@ const formatTime = (time) =>
   `${Math.floor(Math.max(0, time) / 60)}:${String(Math.floor(Math.max(0, time)) % 60).padStart(2, "0")}`;
 
 export default function Session({ config, bindings, onExit, onResult }) {
+  const [playerName, setPlayerName] = useState(() => readStored("vh.player", ""));
+  const [saved, setSaved] = useState(false);
   const canvas = useRef(null),
     videoHost = useRef(null),
     runtime = useRef(null),
@@ -56,6 +58,8 @@ export default function Session({ config, bindings, onExit, onResult }) {
       if (!disposed) setStatus(value);
     };
     const snapshot = (time) => ({
+      rock: game.rock,
+      eligible: game.eligible,
       score: game.score,
       combo: game.combo,
       best: game.best,
@@ -78,7 +82,7 @@ export default function Session({ config, bindings, onExit, onResult }) {
       phase("paused");
     };
     const finish = () => {
-      if (!game || completed) return;
+      if (!game || completed || game.failed) return;
       completed = true;
       crowd.stop();
       const time = transport.getTime() - offset;
@@ -90,7 +94,7 @@ export default function Session({ config, bindings, onExit, onResult }) {
       backdrop?.pauseVideo();
       setHud(result);
       phase("finished");
-      onResult(result);
+
     };
     const play = async () => {
       if (!transport || completed || disposed) return;
@@ -145,7 +149,7 @@ export default function Session({ config, bindings, onExit, onResult }) {
                     config.firstBeat,
                     config.difficulty,
                   ),
-              config.chords !== false,
+              config.chords !== false, config.difficulty,
             );
             if (state === "buffering" && transport.playing) phase("playing");
           } catch (cause) {
@@ -164,8 +168,10 @@ export default function Session({ config, bindings, onExit, onResult }) {
       if (game && transport) {
         const mediaTime = transport.getTime(),
           chartTime = mediaTime - offset;
-        if (state === "playing" && transport.playing) { game.update(chartTime); game.updateHolds(chartTime, held); crowd.update(game, chartTime); }
-        else crowd.stop();
+        if (state === "playing" && transport.playing) { game.update(chartTime); game.updateHolds(chartTime, held); crowd.update(game, chartTime); transport.setBonus?.(chartTime < game.powerUntil);
+          if (game.failed) { completed = true; pause(); transport.setBonus?.(false); crowd.play('boo', 5, 2.5); phase('failed'); }
+        }
+        else if (state !== "failed") crowd.stop();
         if (
           state === "playing" &&
           mediaTime >= transport.duration + Math.max(0, offset) + 0.15
@@ -211,7 +217,7 @@ export default function Session({ config, bindings, onExit, onResult }) {
       try {
         if (config.buffer) {
           transport = new AudioTransport(config.buffer);
-          game = new Game(config.notes, config.chords !== false);
+          game = new Game(config.notes, config.chords !== false, config.difficulty);
           phase("ready");
           if (config.videoId) {
             const node = document.createElement("div");
@@ -299,6 +305,7 @@ export default function Session({ config, bindings, onExit, onResult }) {
           bindings,
           (values, edges) => {
             held = values.slice(0, 5);
+            if (config.difficulty === "easy") held[4] = false;
             if (viewingVideo) return;
             if (edges[7]) runtime.current?.toggle();
             if (state !== "playing" || !transport.playing || !game) return;
@@ -313,7 +320,7 @@ export default function Session({ config, bindings, onExit, onResult }) {
                 );
             } else
               edges.slice(0, 5).forEach((pressed, lane) => {
-                if (pressed) game.hit([lane], time);
+                if (pressed && (lane !== 4 || config.difficulty !== "easy")) game.hit([lane], time);
               });
             if (edges[8]) game.activate(time);
           },
@@ -427,6 +434,7 @@ export default function Session({ config, bindings, onExit, onResult }) {
           <span className="eyebrow">ON STAGE</span>
           <h1>{config.title}</h1>
           <span className="tag">{config.chartLabel}</span>
+          <label>CROWD <progress max="100" value={hud.rock ?? 70} /> {hud.rock < 30 ? "DANGER" : ""}</label>
           <div className="main-score">
             <span className="eyebrow">SCORE</span>
             <strong>{hud.score.toLocaleString()}</strong>
@@ -484,7 +492,7 @@ export default function Session({ config, bindings, onExit, onResult }) {
             "paused",
             "buffering",
             "error",
-            "finished",
+            "finished", "failed",
           ].includes(status) && (
             <div className="stage-overlay">
               <span className="eyebrow">
@@ -499,6 +507,7 @@ export default function Session({ config, bindings, onExit, onResult }) {
                     buffering: "Waiting for the music…",
                     error: "Couldn’t load this set.",
                     finished: `${hud.accuracy}% hit`,
+                    failed: "Set failed. Win the crowd back.",
                   }[status]
                 }
               </h2>
@@ -517,11 +526,12 @@ export default function Session({ config, bindings, onExit, onResult }) {
                   {status === "ready" ? "Play set" : "Resume"} ▷
                 </button>
               )}
-              {status === "finished" && (
+              {["finished", "failed"].includes(status) && (
                 <button className="primary" onClick={onExit}>
                   Back to studio ↗
                 </button>
               )}
+              {status === "finished" && hud.eligible && <div className="save-final-score"><label>Player name<input maxLength={24} value={playerName} onChange={e => setPlayerName(e.target.value)} /></label><button disabled={saved || !playerName.trim()} onClick={() => { writeStored("vh.player", playerName.trim()); if (onResult({ ...hud, username: playerName.trim() }) !== false) setSaved(true); else setError("Could not save score. Browser storage may be full."); }}>{saved ? "Score saved to history" : "Save final score"}</button></div>}
               {error && <p role="alert">{error}</p>}
               {error && config.videoId && (
                 <div>

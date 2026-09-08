@@ -176,3 +176,18 @@ Reload extension 0.6.0 and refresh the YouTube page. Automated keyboard, chart, 
 ## Typography 0.6.1
 
 Nightmare Hero is limited to display headings, branding, and streak celebrations. Barlow Condensed Medium/SemiBold handles smaller copy, forms, controls, counters, and fret labels across the app and extension. Fonts and the Barlow OFL license are bundled locally. Small native instructions and popup copy have larger type. Lint, both builds, and 48 existing tests pass; live visual verification remains blocked by browser policy.
+
+
+## Gameplay 0.7
+
+All chart sources, including previously saved charts, now pass through the selected difficulty arrangement. Easy uses four frets, single notes, minimum 0.8-second spacing, a 4.5-second approach and a 220 ms hit window. Medium uses minimum 0.42-second spacing, at most two-fret chords, a 3.4-second approach and a 180 ms window. Expert retains its 2.4-second approach and 140 ms window. Onset times remain unchanged; this slows the highway and reduces density without slowing the recording. Orange is disabled on Easy. Remapped sustain tails are trimmed to avoid overlapping frets.
+
+The crowd meter starts at 70/100, gains two on a hit, loses five per Easy miss or seven otherwise, and ends the set at zero. Failure stops scoring and requires a fresh set. Boos intensify as health falls, with a three-second cooldown in danger; a synthetic detuned guitar clang accompanies repeated-miss reactions. Single misses are silent. Good/perfect hits create 0.32-second flame bursts; successfully held notes keep flames lit, and star power turns effects cyan. Reduced-motion uses smaller stable flames.
+
+Bonus cheers loop through the eight-second power window, resume for the remaining duration after pause, and use a stronger level. The extension Play invocation now obtains tab audio and forwards dry playback through its offscreen document, with a parallel 190 ms feedback echo enabled only during bonus. No new permissions. Messages are restricted to the captured tab, and a six-second lost-heartbeat timeout releases capture. Quiet preparation and gameplay capture are mutually exclusive. The local-audio transport uses the same wet-only echo. Direct video capture is a fallback; iframe audio remains inaccessible. Audible mixing, capture latency, ads, real browser lifecycle, and flame appearance still require live acceptance because browser inspection is blocked.
+
+Completed native runs can be saved with a display name to one storage key per attempt, including exact video ID, ruleset, chart SHA-256, difficulty, chord setting, play style, score, accuracy and best streak. Library shows history and exports score JSON. Saves are idempotent within the result view and storage failures are visible. Failed, sought or changed-speed native runs are not offered as eligible scores. Web sessions also save named history (up to 500 entries). These are local records, not verified identities or anti-cheat claims.
+
+A SQLite community leaderboard prototype is in server/leaderboard.js. It has validated submissions, idempotent IDs, basic rate limiting and rankings separated by exact video and chart/settings. It is tested locally but not hosted or connected to the extension. See server/README.md for the remaining public-service work. No public global leaderboard exists yet.
+
+Validation: 57 tests, lint and both production builds pass. The suite covers difficulty/hold mapping, failure/restart, score persistence, leaderboard HTTP behavior, sustained cheers, wet-only echo controls, and offscreen dry-output/ownership/cleanup. Live browser verification remains blocked.

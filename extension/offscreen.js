@@ -1,8 +1,29 @@
+import { BonusEcho } from '../src/game/echo.js';
 /* global chrome */
 import { chartFromFrames } from '../src/game/chart-analysis.js';
 import { saveChart } from './chart-store.js';
 import { prepTime, capturedSongEnd } from './prep-clock.js';
-let job = null;
+let job = null, effects = null;
+async function stopEffects() {
+  const current = effects; effects = null;
+  if (!current) return;
+  clearInterval(current.timer); current.echo?.destroy(); current.source?.disconnect();
+  current.stream?.getTracks().forEach(track => track.stop()); await current.context?.close();
+}
+async function startEffects(message) {
+  if (job || effects) throw new Error('Finish the current preparation or game first.');
+  const current = { tabId: message.tabId, lastSeen: Date.now() }; effects = current;
+  try {
+    current.stream = await navigator.mediaDevices.getUserMedia({ audio: { mandatory: { chromeMediaSource: 'tab', chromeMediaSourceId: message.streamId } }, video: false });
+    current.context = new AudioContext(); await current.context.resume();
+    current.source = current.context.createMediaStreamSource(current.stream);
+    current.source.connect(current.context.destination); // Restore dry playback suppressed by tab capture.
+    current.echo = new BonusEcho(current.context, current.source);
+    current.timer = setInterval(() => { if (Date.now() - current.lastSeen > 6000) stopEffects(); }, 1000);
+    current.stream.getTracks().forEach(track => { track.onended = () => stopEffects(); });
+    return { ok: true };
+  } catch (error) { await stopEffects(); throw error; }
+}
 const requestPlayer = async (task, action = 'state') => {
   let timeout;
   const response = await Promise.race([
@@ -18,11 +39,18 @@ const storage = { async set(value) {
 } };
 const publish = value => storage.set({ 'vh.preparation': value });
 chrome.runtime.onMessage.addListener((message, sender, reply) => {
-  if (sender.id !== chrome.runtime.id || message.target !== 'offscreen' || sender.tab) return;
-  if (message.type === 'status') { reply({ busy: !!job }); return; }
+  if (sender.id !== chrome.runtime.id || message.target !== 'offscreen') return;
+  if (sender.tab) {
+    if (effects?.tabId !== sender.tab.id) return;
+    if (message.type === 'effect-state') { effects.lastSeen = Date.now(); effects.echo?.set(message.active === true); reply({ ok: true }); }
+    if (message.type === 'effect-close') { stopEffects().then(() => reply({ ok: true })); return true; }
+    return;
+  }
+  if (message.type === 'start-effects') { startEffects(message).then(reply).catch(error => reply({ error: error.message })); return true; }
+  if (message.type === 'status') { reply({ busy: !!job || !!effects }); return; }
   if (message.type === 'cancel') { job?.controller.abort(); reply({ ok: true }); return; }
   if (message.type !== 'start') return;
-  if (job) { reply({ error: 'Another song is already preparing.' }); return; }
+  if (job || effects) { reply({ error: 'Another song is already preparing.' }); return; }
   job = { ...message, beganAt: Date.now(), controller: new AbortController() };
   const task = job;
   run(task).finally(() => { if (job === task) job = null; });

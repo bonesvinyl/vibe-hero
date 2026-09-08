@@ -1,3 +1,5 @@
+import { VideoBonusEcho } from '../src/game/echo.js';
+import { scoreRecord, saveScore } from '../src/game/scores.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -24,7 +26,7 @@ function fixture() {
     addEventListener(type, callback) { listeners.set(type, callback); }, removeEventListener(type) { listeners.delete(type); }, title: 'Fixture - YouTube' };
   const window = { addEventListener(type, callback) { listeners.set(type, callback); }, removeEventListener(type) { listeners.delete(type); } };
   const source = readFileSync(new URL('../extension/overlay.js', import.meta.url), 'utf8').replace(/^import .*;\n/gm, '');
-  vm.runInNewContext(source, { saveChart, loadChart, chrome: { runtime: { getURL: path => path }, storage: { local: { get: async () => ({}) } } }, CrowdAudio, Game, practiceChart, validateChart, KEYS, nativeSettings, parseHandoff, styles: '', document, window,
+  vm.runInNewContext(source, { VideoBonusEcho, scoreRecord, saveScore, saveChart, loadChart, chrome: { runtime: { getURL: path => path }, storage: { local: { get: async () => ({}) } } }, CrowdAudio, Game, practiceChart, validateChart, KEYS, nativeSettings, parseHandoff, styles: '', document, window,
     location: { href: 'https://www.youtube.com/watch?v=WtuoFv4dcwM', hash: '' }, URL, Event, performance,
     requestAnimationFrame(callback) { frame = callback; return 1; }, cancelAnimationFrame() { frame = null; },
     innerWidth: 1200, innerHeight: 800, drawHighway(_canvas, game) { drawnGame = game; } });

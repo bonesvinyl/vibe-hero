@@ -95,15 +95,40 @@ export function validateChart(value, duration) {
   });
 }
 
+// Apply accessibility/difficulty to every source, including older saved charts.
+export function arrangeNotes(notes, difficulty, chords = true) {
+  const spacing = { easy: 0.8, medium: 0.42, expert: 0 }[difficulty] ?? 0;
+  const arranged = [];
+  for (const note of notes) {
+    if (arranged.length && note.time - arranged.at(-1).time < spacing) continue;
+    let lanes = [...new Set(note.lanes.map(lane => difficulty === 'easy' ? Math.min(3, lane) : lane))];
+    if (!chords || difficulty === 'easy') lanes = [lanes[Math.floor(lanes.length / 2)]];
+    else if (difficulty === 'medium') lanes = lanes.slice(0, 2);
+    arranged.push({ ...note, lanes });
+  }
+  // Remapping orange to blue must not create overlapping held frets.
+  const nextTimes = Array(5).fill(Infinity);
+  for (let i = arranged.length - 1; i >= 0; i--) {
+    const note = arranged[i];
+    if (note.duration) note.duration = Math.max(0, Math.min(note.duration, ...note.lanes.map(l => nextTimes[l] - note.time - 0.04)));
+    note.lanes.forEach(l => { nextTimes[l] = note.time; });
+  }
+  return arranged;
+}
+
 export class Game {
-  constructor(notes, chords = true) {
-    this.notes = chords ? notes : notes.map(note => ({ ...note, lanes: [note.lanes[Math.floor(note.lanes.length / 2)]] }));
+  constructor(notes, chords = true, difficulty = null) {
+    this.difficulty = difficulty;
+    this.approach = { easy: 4.5, medium: 3.4, expert: 2.4 }[difficulty] || APPROACH;
+    this.window = difficulty === "easy" ? 0.22 : difficulty === "medium" ? 0.18 : WINDOW;
+    this.notes = arrangeNotes(notes, difficulty, chords);
     this.reset();
   }
   reset(time = -2) {
     this.results = this.notes.map((n) =>
-      n.time < time - WINDOW ? "skipped" : null,
+      n.time < time - this.window ? "skipped" : null,
     );
+    this.flames = Array(5).fill(-1);
     this.partial = new Map();
     this.holds = new Map();
     this.score = 0;
@@ -116,21 +141,25 @@ export class Game {
     this.feedbackUntil = 0;
     this.lastTime = time;
     this.cursor = 0;
+    this.rock = 70; this.failed = false; this.eligible = time <= 0;
     this.energy = 0;
     this.powerUntil = -1;
   }
   update(time) {
+    if (this.failed) return;
     // Seeking starts a fresh attempt; rewinding can never farm a scored note.
     if (time < this.lastTime - 0.25 || time > this.lastTime + 1)
-      this.reset(time);
+      { const wasStarted = this.lastTime >= 0; this.reset(time); this.eligible = !wasStarted && time <= 0; }
     this.lastTime = time;
     while (
       this.cursor < this.notes.length &&
-      this.notes[this.cursor].time < time - WINDOW
+      this.notes[this.cursor].time < time - this.window
     ) {
       if (!this.results[this.cursor]) {
         this.results[this.cursor] = "miss";
         this.misses++;
+        this.rock = Math.max(0, this.rock - (this.difficulty === "easy" ? 5 : 7));
+        if (!this.rock) { this.failed = true; this.holds.clear(); this.powerUntil = -1; }
         this.combo = 0;
         this.feedback = "Miss";
         this.feedbackUntil = time + 0.5;
@@ -140,10 +169,11 @@ export class Game {
   }
   hit(lanes, time, strum = false) {
     this.update(time);
+    if (this.failed) return false;
     const candidates = [];
     for (
       let i = this.cursor;
-      i < this.notes.length && this.notes[i].time <= time + WINDOW;
+      i < this.notes.length && this.notes[i].time <= time + this.window;
       i++
     ) {
       if (
@@ -182,7 +212,9 @@ export class Game {
     this.combo++;
     this.best = Math.max(this.best, this.combo);
     if (this.combo % 50 === 0) { this.milestone = this.combo; this.milestoneUntil = time + 1.4; }
+    for (const lane of note.lanes) this.flames[lane] = time + 0.32;
     this.hits++;
+    this.rock = Math.min(100, this.rock + 2);
     this.score +=
       (perfect ? 100 : 60) * this.multiplier * (time < this.powerUntil ? 2 : 1);
     this.energy = Math.min(100, this.energy + 4);
@@ -191,6 +223,7 @@ export class Game {
     return true;
   }
   updateHolds(time, held) {
+    if (this.failed) return;
     for (const partial of this.partial.values()) for (const lane of partial) if (!held[lane]) partial.delete(lane);
     for (const [index, hold] of this.holds) {
       if (time < hold.until && !this.notes[index].lanes.every(lane => held[lane])) {
@@ -208,7 +241,7 @@ export class Game {
     }
   }
   activate(time) {
-    if (this.energy >= 100 && time >= 0) {
+    if (!this.failed && this.energy >= 100 && time >= 0 && time >= this.powerUntil) {
       this.energy = 0;
       this.powerUntil = time + 8;
     }

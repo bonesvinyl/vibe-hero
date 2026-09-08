@@ -1,3 +1,4 @@
+import { BonusEcho } from "./echo.js";
 export async function decodeFile(file) {
   if (file.size > 100 * 1024 * 1024)
     throw new Error("Choose an audio file smaller than 100 MB.");
@@ -78,6 +79,7 @@ export class AudioTransport {
     this.source = this.context.createBufferSource();
     this.source.buffer = this.buffer;
     this.source.connect(this.context.destination);
+    if (this.context.createDelay) this.echo = new BonusEcho(this.context, this.source);
     this.source.start(
       this.started + Math.max(0, -this.position),
       Math.max(0, this.position),
@@ -88,10 +90,12 @@ export class AudioTransport {
     if (!this.playing) return;
     this.position = this.getTime();
     this.playing = false;
+    this.echo?.destroy(); this.echo = null;
     this.source?.stop();
     this.source?.disconnect();
     this.source = null;
   }
+  setBonus(active) { this.echo?.set(active); }
   destroy() {
     this.disposed = true;
     this.pause();

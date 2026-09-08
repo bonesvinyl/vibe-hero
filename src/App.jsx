@@ -254,10 +254,14 @@ export default function App() {
   }
   const recordResult = useCallback(
     (result) => {
-      setHistory((previous) => {
+      const previous = safeArray(readStored("vh.history.v2", []));
         const next = [
           {
             title: session.title,
+            username: result.username,
+            videoId: session.videoId,
+            best: result.best,
+            chords: session.chords,
             score: result.score,
             accuracy: result.accuracy,
             difficulty: session.difficulty,
@@ -265,10 +269,10 @@ export default function App() {
             date: new Date().toISOString(),
           },
           ...previous,
-        ].slice(0, 30);
-        writeStored("vh.history.v2", next);
-        return next;
-      });
+        ].slice(0, 500);
+        if (!writeStored("vh.history.v2", next)) return false;
+        setHistory(next);
+        return true;
     },
     [session],
   );
@@ -820,12 +824,12 @@ export default function App() {
             </div>
           ) : (
             <div className="setlist-rows">
-              {history.slice(0, 5).map((entry, i) => (
+              {history.map((entry, i) => (
                 <div className="setlist-row" key={`${entry.date}-${i}`}>
                   <span className="muted">
                     {String(i + 1).padStart(2, "0")}
                   </span>
-                  <strong>{entry.title}</strong>
+                  <strong>{entry.title} {entry.username ? `· ${entry.username}` : ""}</strong>
                   <span>{entry.difficulty}</span>
                   <span>{entry.accuracy}%</span>
                   <span>{entry.score.toLocaleString()} pts</span>

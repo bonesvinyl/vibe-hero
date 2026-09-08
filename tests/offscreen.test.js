@@ -41,3 +41,27 @@ test('offscreen preparation saves before reporting ready and pauses before relea
     assert.equal(closed, true);
   }
 });
+
+test('gameplay audio restores dry output, accepts effects only from its tab, and releases on exit', async () => {
+  let listener, timer, stopped=0, closed=0;
+  const toggles=[], destination={}, connections=[];
+  const source = readFileSync(new URL('../extension/offscreen.js', import.meta.url), 'utf8').replace(/^import .*;\n/gm, '');
+  const track={stop(){stopped++;}};
+  class AudioContext {
+    destination=destination;
+    async resume(){} async close(){closed++;}
+    createMediaStreamSource(){return {connect(target){connections.push(target);},disconnect(){}};}
+  }
+  class BonusEcho {set(active){toggles.push(active);} destroy(){toggles.push('destroy');}}
+  const chrome={runtime:{id:'test',onMessage:{addListener(fn){listener=fn;}}}};
+  vm.runInNewContext(source,{chrome,AudioContext,BonusEcho,Date,navigator:{mediaDevices:{getUserMedia:async()=>({getTracks:()=>[track]})}},setInterval(fn){timer=fn;return 1;},clearInterval(){timer=null;}});
+  let started;
+  listener({target:'offscreen',type:'start-effects',tabId:7,streamId:'capture'},{id:'test'},r=>{started=r;}); await settle();
+  assert.equal(started.ok,true); assert.equal(connections[0],destination);
+  listener({target:'offscreen',type:'effect-state',active:true},{id:'test',tab:{id:8}},()=>{});
+  assert.equal(toggles.length,0);
+  listener({target:'offscreen',type:'effect-state',active:true},{id:'test',tab:{id:7}},()=>{});
+  assert.deepEqual(toggles,[true]);
+  listener({target:'offscreen',type:'effect-close'},{id:'test',tab:{id:7}},()=>{}); await settle();
+  assert.equal(stopped,1); assert.equal(closed,1); assert.equal(timer,null);
+});

@@ -10,6 +10,7 @@ export function drawHighway(
   labels = ["A", "S", "D", "F", "G"],
   highwayOpacity = 1,
 ) {
+  const approach = game.approach || APPROACH;
   const width = canvas.clientWidth,
     height = canvas.clientHeight,
     dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -90,21 +91,24 @@ export function drawHighway(
   };
   // Include scored sustains whose heads have already passed the cursor.
   const visible = new Set([...game.holds?.keys() || []]);
-  for (let i = game.cursor; i < game.notes.length && game.notes[i].time - time <= APPROACH; i++) visible.add(i);
+  for (let i = game.cursor; i < game.notes.length && game.notes[i].time - time <= approach; i++) visible.add(i);
   for (const i of [...visible].sort((a, b) => b - a)) {
     const note = game.notes[i], active = game.holds?.has(i), delta = note.time - time;
     if (!active && (delta < -0.2 || game.results[i])) continue;
-    const p = active ? 1 : 1 - delta / APPROACH;
+    const p = active ? 1 : 1 - delta / approach;
     for (const lane of note.lanes) {
       if (note.duration > 0) {
-        const tail = Math.max(0, Math.min(1, 1 - (note.time + note.duration - time) / APPROACH));
+        const tail = Math.max(0, Math.min(1, 1 - (note.time + note.duration - time) / approach));
         line(project(lane + 0.5, tail), project(lane + 0.5, p), active ? "#b8faff" : COLORS[lane], Math.max(3, width * 0.013));
         line(project(lane + 0.5, tail), project(lane + 0.5, p), "#ffffff99", 2);
       }
       gem(project(lane + 0.5, p), lane, active || time < game.powerUntil);
     }
   }
+  const sustaining = new Set([...game.holds?.keys() || []].flatMap(i => game.notes[i].lanes));
+  const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   for (let lane = 0; lane < 5; lane++) {
+    if (lane === 4 && game.difficulty === "easy") continue;
     const point = project(lane + 0.5, 1),
       radius = Math.min(width * 0.04, 23);
     ctx.beginPath();
@@ -115,6 +119,23 @@ export function drawHighway(
     ctx.lineWidth = held[lane] ? 4 : 2;
     ctx.stroke();
     if (held[lane]) gem(point, lane, true);
+    const flame = sustaining.has(lane) ? 1 : Math.max(0, ((game.flames?.[lane] || -1) - time) / 0.32);
+    if (flame > 0) {
+      const powered = time < game.powerUntil, h = radius * (reduced ? 1.3 : 3.2) * (0.65 + flame * 0.35);
+      ctx.save(); ctx.globalAlpha = Math.min(1, flame); ctx.shadowColor = powered ? '#6ef4ff' : '#ffb62c'; ctx.shadowBlur = 22;
+      const glow = ctx.createLinearGradient(0, point.y, 0, point.y - h);
+      glow.addColorStop(0, '#fffce9'); glow.addColorStop(0.35, powered ? '#8bffff' : '#fff465'); glow.addColorStop(1, powered ? '#1facff00' : '#ff670000');
+      ctx.fillStyle = glow;
+      for (let tongue = -1; tongue <= 1; tongue++) {
+        const sway = reduced ? 0 : Math.sin(time * 23 + lane * 2 + tongue) * radius * 0.22;
+        const x = point.x + tongue * radius * 0.45, tip = h * (tongue ? 0.7 : 1);
+        ctx.beginPath(); ctx.moveTo(x - radius * 0.6, point.y);
+        ctx.quadraticCurveTo(x - radius, point.y - tip * 0.6, x + sway, point.y - tip);
+        ctx.quadraticCurveTo(x + radius, point.y - tip * 0.45, x + radius * 0.6, point.y);
+        ctx.closePath(); ctx.fill();
+      }
+      ctx.restore();
+    }
     ctx.font = "14px BarlowCondensed, monospace";
     ctx.textAlign = "center";
     ctx.fillStyle = "#aaa";
