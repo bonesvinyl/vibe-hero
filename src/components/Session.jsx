@@ -154,7 +154,7 @@ export default function Session({ config, bindings, onExit, onResult }) {
       if (game && transport) {
         const mediaTime = transport.getTime(),
           chartTime = mediaTime - offset;
-        if (state === "playing" && transport.playing) game.update(chartTime);
+        if (state === "playing" && transport.playing) { game.update(chartTime); game.updateHolds(chartTime, held); }
         if (
           state === "playing" &&
           mediaTime >= transport.duration + Math.max(0, offset) + 0.15
@@ -292,6 +292,7 @@ export default function Session({ config, bindings, onExit, onResult }) {
             if (edges[7]) runtime.current?.toggle();
             if (state !== "playing" || !transport.playing || !game) return;
             const time = transport.getTime() - offset;
+            game.updateHolds(time, held);
             if (config.mode === "strum") {
               if (edges[5] || edges[6])
                 game.hit(

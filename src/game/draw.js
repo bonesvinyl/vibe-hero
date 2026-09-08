@@ -72,30 +72,36 @@ export function drawHighway(
     line(project(0, p), project(5, p), "#c9c8ba18");
   }
   line(project(0, 1), project(5, 1), "#eee8d5", 2);
-  for (let i = game.cursor; i < game.notes.length; i++) {
-    const note = game.notes[i],
-      delta = note.time - time;
-    if (delta > APPROACH) break;
-    if (delta < -0.2 || game.results[i]) continue;
-    const p = 1 - delta / APPROACH;
+  const gem = (point, lane, active = false) => {
+    const r = width * 0.047 * point.depth;
+    const ellipse = (y, rx, ry, color) => {
+      ctx.beginPath(); ctx.ellipse(point.x, y, rx, ry, 0, 0, Math.PI * 2);
+      ctx.fillStyle = color; ctx.fill();
+    };
+    ctx.shadowColor = active ? "#90f5ff" : COLORS[lane];
+    ctx.shadowBlur = active ? 24 : preview ? 6 : 10;
+    ellipse(point.y + r * 0.22, r * 1.12, r * 0.52, "#090d13");
+    ellipse(point.y + r * 0.12, r * 1.04, r * 0.5, "#c2cad3");
+    const shine = ctx.createLinearGradient(0, point.y - r * 0.6, 0, point.y + r * 0.35);
+    shine.addColorStop(0, "#ffffff"); shine.addColorStop(0.28, active ? "#65eaff" : COLORS[lane]); shine.addColorStop(1, "#101620");
+    ellipse(point.y - r * 0.12, r * 0.88, r * 0.55, shine);
+    ctx.shadowBlur = 0;
+    ellipse(point.y - r * 0.38, r * 0.45, r * 0.16, "#fff4de");
+  };
+  // Include scored sustains whose heads have already passed the cursor.
+  const visible = new Set([...game.holds?.keys() || []]);
+  for (let i = game.cursor; i < game.notes.length && game.notes[i].time - time <= APPROACH; i++) visible.add(i);
+  for (const i of [...visible].sort((a, b) => b - a)) {
+    const note = game.notes[i], active = game.holds?.has(i), delta = note.time - time;
+    if (!active && (delta < -0.2 || game.results[i])) continue;
+    const p = active ? 1 : 1 - delta / APPROACH;
     for (const lane of note.lanes) {
-      const point = project(lane + 0.5, p),
-        w = width * 0.108 * point.depth,
-        h = Math.max(3, 12 * point.depth);
-      ctx.shadowColor = COLORS[lane];
-      ctx.shadowBlur = preview ? 8 : 14;
-      ctx.fillStyle = COLORS[lane];
-      ctx.beginPath();
-      ctx.roundRect(point.x - w / 2, point.y - h / 2, w, h, h / 2);
-      ctx.fill();
-      ctx.shadowBlur = 0;
-      ctx.fillStyle = "#fff8";
-      ctx.fillRect(
-        point.x - w * 0.3,
-        point.y - h / 3,
-        w * 0.6,
-        Math.max(1, h / 5),
-      );
+      if (note.duration > 0) {
+        const tail = Math.max(0, Math.min(1, 1 - (note.time + note.duration - time) / APPROACH));
+        line(project(lane + 0.5, tail), project(lane + 0.5, p), active ? "#b8faff" : COLORS[lane], Math.max(3, width * 0.013));
+        line(project(lane + 0.5, tail), project(lane + 0.5, p), "#ffffff99", 2);
+      }
+      gem(project(lane + 0.5, p), lane, active || time < game.powerUntil);
     }
   }
   for (let lane = 0; lane < 5; lane++) {
@@ -108,6 +114,7 @@ export function drawHighway(
     ctx.strokeStyle = COLORS[lane];
     ctx.lineWidth = held[lane] ? 4 : 2;
     ctx.stroke();
+    if (held[lane]) gem(point, lane, true);
     ctx.font = "11px monospace";
     ctx.textAlign = "center";
     ctx.fillStyle = "#aaa";

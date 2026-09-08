@@ -50,7 +50,11 @@ export function practiceChart(
     t < duration - 0.15;
     t += step, i++
   )
-    notes.push({ time: +t.toFixed(4), lanes: [pattern[i % pattern.length]] });
+    {
+      const lane = pattern[i % pattern.length];
+      const lanes = difficulty === "expert" && i % 8 === 4 ? [0, 2, 4] : difficulty !== "easy" && i % 4 === 3 ? [lane, (lane + 2) % 5].sort() : [lane];
+      notes.push({ time: +t.toFixed(4), lanes, ...(i % 8 === 6 ? { duration: Math.min(step * 0.7, duration - t - 0.15) } : {}) });
+    }
   return notes;
 }
 
@@ -63,6 +67,7 @@ export function validateChart(value, duration) {
   )
     throw new Error("Expected a version 1 chart with 1–20,000 notes.");
   let previous = -1;
+  const ends = Array(5).fill(-1);
   return value.notes.map((note) => {
     if (
       !Number.isFinite(note.time) ||
@@ -81,8 +86,12 @@ export function validateChart(value, duration) {
       note.lanes.some((l) => !Number.isInteger(l) || l < 0 || l > 4)
     )
       throw new Error("Each note needs unique lanes from 0 through 4.");
+    if (note.duration !== undefined && (!Number.isFinite(note.duration) || note.duration < 0 || note.time + note.duration > duration))
+      throw new Error("Hold duration must be nonnegative and fit this track.");
+    if (note.lanes.some(lane => ends[lane] > note.time)) throw new Error("A fret cannot overlap its previous hold.");
+    for (const lane of note.lanes) ends[lane] = note.time + (note.duration || 0);
     previous = note.time;
-    return { time: note.time, lanes: [...note.lanes].sort() };
+    return { time: note.time, lanes: [...note.lanes].sort(), ...(note.duration > 0 ? { duration: note.duration } : {}) };
   });
 }
 
@@ -96,6 +105,7 @@ export class Game {
       n.time < time - WINDOW ? "skipped" : null,
     );
     this.partial = new Map();
+    this.holds = new Map();
     this.score = 0;
     this.combo = 0;
     this.best = 0;
@@ -167,6 +177,7 @@ export class Game {
     const perfect = Math.abs(note.time - time) <= PERFECT;
     this.results[index] = perfect ? "perfect" : "good";
     this.partial.delete(index);
+    if (note.duration > 0) this.holds.set(index, { until: note.time + note.duration, last: Math.max(time, note.time) });
     this.combo++;
     this.best = Math.max(this.best, this.combo);
     this.hits++;
@@ -176,6 +187,23 @@ export class Game {
     this.feedback = perfect ? "Perfect" : "Good";
     this.feedbackUntil = time + 0.5;
     return true;
+  }
+  updateHolds(time, held) {
+    for (const partial of this.partial.values()) for (const lane of partial) if (!held[lane]) partial.delete(lane);
+    for (const [index, hold] of this.holds) {
+      if (time < hold.until && !this.notes[index].lanes.every(lane => held[lane])) {
+        this.holds.delete(index);
+        this.combo = 0;
+        this.feedback = "Hold released";
+        this.feedbackUntil = time + 0.5;
+        continue;
+      }
+      const end = Math.min(time, hold.until);
+      const ticks = Math.max(0, Math.floor((end - hold.last + 1e-8) / 0.1));
+      this.score += ticks * 5 * this.multiplier * (time < this.powerUntil ? 2 : 1);
+      hold.last += ticks * 0.1;
+      if (time >= hold.until) this.holds.delete(index);
+    }
   }
   activate(time) {
     if (this.energy >= 100 && time >= 0) {

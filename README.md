@@ -79,7 +79,7 @@ In **Fine-tune your set**, import or export JSON:
 }
 ```
 
-Times are seconds from audio/video start. Lanes are 0–4. Notes must be strictly ordered, at least 40 ms apart, and inside the track duration. Chords are one timestamp with multiple unique lanes. Limits: 20,000 notes / 2 MB. Difficulty does not rewrite an imported chart. Sustain/whammy/pitch-bend chart events are not implemented.
+Times are seconds from audio/video start. Lanes are 0–4. Notes must be strictly ordered, at least 40 ms apart, and inside the track duration. Chords are one timestamp with multiple unique lanes. Limits: 20,000 notes / 2 MB. Difficulty does not rewrite an imported chart. Optional `duration` in seconds adds a sustain; it must fit the track and cannot overlap another note on the same fret. Whammy and pitch bends are not implemented.
 
 ## Music video search
 
@@ -113,7 +113,7 @@ See [validation notes](docs/VALIDATION.md) for passed checks and the remaining l
 
 The YouTube setup now includes **Auto-detect BPM**. Choose a local copy of the song or **Listen to a song tab**. For tab detection, play a steady section of the song in another browser tab, choose that tab in the sharing picker, and enable **Share tab audio**. The app records 20 seconds of audio only into memory, estimates tempo locally, and applies it to the BPM field. All sharing tracks stop on completion, cancellation, errors, or leaving the detector. Video frames are never recorded or uploaded. Browser tab-audio support varies; Chrome/Edge are the intended path, with a file picker fallback. No microphone is requested.
 
-The estimator tests repeating periods across the onset envelope and handles longer-period aliases from fills. It reports pulse strength and does not promise perfect tempo on arbitrary music. Half/double-tempo controls remain available. Detection sets tempo only: the first-beat offset still needs to match the exact recording. Tab samples are used for tempo, not a full-song chart. File import on the Local audio tab continues to analyze the full song and generate timestamped notes.
+The estimator tests repeating periods across the onset envelope and handles longer-period aliases from fills. It reports pulse strength and does not promise perfect tempo on arbitrary music. Half/double-tempo controls remain available. Detection sets tempo only: the first-beat offset still needs to match the exact recording. The main app’s 20-second tab samples are used for tempo only. The extension’s separate Listen & build chart flow listens through the whole song. File import on the Local audio tab continues to analyze the full song and generate timestamped notes.
 
 [BPM Database](https://www.bpmdatabase.com/music/search/) is linked for manual lookup. Its [terms](https://www.bpmdatabase.com/terms/) prohibit automated collection without express written consent, so the app does not scrape it.
 
@@ -126,8 +126,21 @@ YouTube errors are now differentiated. Error **150** (reported for `WtuoFv4dcwM`
 
 When the embedded player refuses a song, the error screen now offers **Play on YouTube with Vibe Hero**. Build with `npm run build:extension`, then load `dist-extension` using Developer mode → Load unpacked in Chrome, Edge, or Brave. Open the song on YouTube and click the extension’s **Play on this video** button. Setup is also available at `/play-on-youtube.html` in the app.
 
-The extension uses YouTube’s existing HTML video and playback clock, draws the video behind the shared fretboard renderer, and shares the scoring engine. It supports A/S/D/F/G, arrow strumming, star power, pause, BPM/first beat/calibration, brightness, and imported charts. The recovery link carries only validated game settings; import authored charts again. Gamepad mapping and audio analysis stay in the main app; this extension currently accepts keyboard input only.
+The extension uses YouTube’s existing HTML video and playback clock, draws the video behind the shared fretboard renderer, and shares the scoring engine. It supports A/S/D/F/G, arrow strumming, star power, pause, BPM/first beat/calibration, brightness, and imported charts. The recovery link carries only validated game settings; import authored charts again. Gamepad mapping stays in the main app; this extension accepts keyboard input and now includes full-song tab-audio analysis.
 
 The manifest requests only activeTab and scripting: injection happens on the selected YouTube watch tab when clicked. No downloader, proxy, broad host permissions, telemetry, or service is included. Ads return to the original player and scoring waits. YouTube controls temporarily restores the page. Escape, closing the overlay, or navigating away removes listeners and animation work. Availability requirements on YouTube itself still apply.
 
 The app explicitly sends its real origin and a strict-origin-when-cross-origin referrer policy. This is configuration hardening, **not a confirmed fix for error 150**. The browser inspection tool is blocked by its enforced policy check, so extension playback, ad transitions, canvas video rendering, and visuals remain unverified. Node tests/builds do not establish live compatibility. Test the same failing recording on its normal watch page first, then activate the extension and check pause, seek, ads, and synchronization.
+
+
+## Native extension 0.4: listen once, replay with an audio chart
+
+The user verified native YouTube playback in 0.3. This update adds raised, shaded note gems, visible sustain trails, two/three-fret accents on harder difficulty, and a side combo/star-power meter. At full charge, Space or the meter button activates eight seconds of double points. Sustain scoring requires the relevant frets to remain held; releasing early stops the hold and breaks the streak. Old version-1 charts remain valid.
+
+Click **Listen & build chart**, choose **this exact YouTube tab**, enable **Share tab audio**, and let the complete song play at normal speed. Keep the tab foreground; don’t seek. The browser picker is explicit because the extension cannot assume which audio you want to share. It extracts spectral attacks and energy in memory, timestamped against the native video clock; no audio is recorded to a file or uploaded. It waits through detected ads and pauses, rejects seeks/rate changes, and stops sharing on completion, cancellation, or closing the overlay. Initial listening takes the song’s duration, not a few seconds.
+
+The resulting chart follows attacks without snapping them to BPM, excludes detected silence, infers sustain tails from persistent energy, and estimates BPM from repeating onset patterns. Harder difficulty adds chord accents on stronger attacks; these are gameplay arrangements, not recovered guitar fingerings. **This is full-mix analysis, not guitar isolation:** vocals, keys, and percussion may still produce notes. Capture delay may need the Timing adjustment. BPM can be uncertain or half/double the musical pulse. Changing difficulty rebuilds from the captured features; imported authored charts are left intact.
+
+Choose **Save chart** before playing or after finishing to keep a reusable JSON file. Exports identify the YouTube video; importing a chart tagged for a different video fails clearly. A song library can consist of these files plus their recording IDs. Features themselves are not persisted. Reload the updated unpacked extension, then refresh the YouTube page before testing.
+
+For guitar-specific charts, use an isolated guitar recording with the local-audio analyzer and import its chart against the matching video. A stronger future batch pipeline would separate the guitar, run polyphonic transcription, simplify pitches/chords into five-fret difficulty arrangements, then review timing and rests per recording. [Basic Pitch](https://github.com/spotify/basic-pitch) supports polyphony and works best on one instrument at a time; [Demucs](https://github.com/facebookresearch/demucs) is a source-separation research option, not an implemented dependency here. This update does not claim automated guitar isolation or a completed 100-song library.
