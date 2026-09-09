@@ -1,13 +1,16 @@
 {
-  "name": "rhythm-game",
+  "name": "vibe-hero",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "test": "node --test tests/*.test.js",
+    "preview": "vite preview",
+    "build:extension": "vite build --config vite.extension.config.js && vite build --config vite.offscreen.config.js && vite build --config vite.library.config.js && node scripts/package-extension.js",
+    "prepare:queue": "node scripts/prepare-queue.js"
   },
   "dependencies": {
     "react": "^19.2.0",
